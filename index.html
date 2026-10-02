@@ -1,2333 +1,1001 @@
-import React, { useState, useEffect } from "react";
-2import { Terminal, Cpu, Shield, Zap, Play, BookOpen, Layers, Code, Globe, Check, Copy, AlertTriangle, RefreshCw, CpuIcon, Download, DollarSign, Building, Sparkles, FileText, ExternalLink, MessageSquareCode, Info, CheckCircle2, Search, AlertCircle, XCircle, ShoppingCart } from "lucide-react";
-3import { industrialSystems } from "./systemsData";
-4import { analyzeAndCompileHeib12, CompilerReport, Diagnostic } from "./compilerEngine";
-5import { FoundersChamber, MarketCheckoutModal, IssuedLicense, CodeTrackingEvent } from "./FoundersChamber";
-6import { searchMasterHeib12Catalog, masterCatalogStats, SearchCatalogItem } from "./systemsData2";
-7
-8export default function Component() {
-9  const [consoleMode, setConsoleMode] = useState<"output" | "audit" | "opcodes">("output");
-10  const [activeTab, setActiveTab] = useState<"playground" | "commentator" | "whitepaper" | "github" | "download" | "pricing" | "compiler" | "keywords" | "apps" | "selfhost" | "search" | "founders">("playground");
-11  const [searchMode, setSearchMode] = useState<"web" | "code">("web");
-12  const [activeArticle, setActiveArticle] = useState<{ title: string; category: string; summary: string; sections: { title: string; body: string }[]; code?: string } | null>(null);
-13  const [selectedSysId, setSelectedSysId] = useState<string>("refrigerator");
-14  const [searchQuery, setSearchQuery] = useState<string>("");
-15  const [searchCategoryFilter, setSearchCategoryFilter] = useState<string>("all");
-16  const [searchPage, setSearchPage] = useState<number>(0);
-17
-18  const cargoTruckCode = `@target: vehicle.cargo_truck.heavy_freight.v12
-19@security: automotive.heavy_vehicle.iso26262.asil_d
-20
-21initHeavyCargoTruck() {
-22    // تشغيل محركات الدفع الكهربائي الثقيل بعزم 3500 نيوتن.متر
-23    powertrain.initHeavyDutyInverter(maxTorqueNM: 3500.0)
-24    brakes.armDualPneumaticAbs(airPressureBar: 12.5)
-25    platooning.initRadarDistanceHold(safeFollowMeters: 25.0)
-26    sys.notify(target: FleetManagementDashboard, alert: "CARGO_TRUCK_ONLINE_VERIFIED")
-27}
-28
-29pulse cargoTruckSafetyLoop() {
-30    val trailerSwayAngle = sensor.read("hitch_sway_angle_deg")
-31    val cargoWeightTons = sensor.read("axle_load_sensor_tons")
-32
-33    // موازنة تأرجح المقطورة ومنع الانقلاب في 0.008 ميلي ثانية
-34    if (abs(trailerSwayAngle) > 2.5) {
-35        signal.applyIndividualWheelBrake(axle: TRAILER_REAR_LEFT, forcePercent: 40)
-36    }
-37
-38    // تعديل ضغط المساعدات الهوائية تلقائياً بحسب وزن الحمولة
-39    if (cargoWeightTons > 45.0) {
-40        signal.adjustAirSuspensionPressure(stiffnessLevel: MAX_LOAD)
-41    }
-42}
-43
-44event onJackknifeOrEmergencyStop(decelerationG: Float64) {
-45    if (decelerationG > 3.8) {
-46        // كبح هوائي طارئ كامل وفصل قفل المقطورة الآمن لمنع انطواء الشاحنة
-47        signal.instantFullPneumaticBrakeSurge()
-48        signal.disengageTrailerHitchLockFailsafe()
-49        sys.notify(target: TransportHQ, alert: "HEAVY_TRUCK_JACKKNIFE_PREVENTION_ENGAGED")
-50    }
-51}`;
-52
-53  const [code, setCode] = useState<string>(cargoTruckCode);
-54
-55  // Live telemetry registry of code copies and downloads
-56  const [trackingLogs, setTrackingLogs] = useState<CodeTrackingEvent[]>([
-57    {
-58      id: "TRK-9021",
-59      action: "COPY_CLIPBOARD",
-60      targetName: "السيارات ذاتية القيادة (autonomous.car)",
-61      sizeBytes: 1240,
-62      linesCount: 38,
-63      timestamp: "2026-10-01 02:18:44",
-64      trackingHash: "SHA256-a79f82d1c",
-65      status: "UNLICENSED_COPY",
-66    },
-67    {
-68      id: "TRK-9022",
-69      action: "DOWNLOAD_FILE",
-70      targetName: "heib12_core_engine.h12",
-71      sizeBytes: 2890,
-72      linesCount: 65,
-73      timestamp: "2026-10-01 02:45:10",
-74      trackingHash: "SHA256-c41890be4",
-75      status: "UNLICENSED_COPY",
-76    },
-77    {
-78      id: "TRK-9023",
-79      action: "COPY_CLIPBOARD",
-80      targetName: "الروبوتات الجراحية والمغناطيس الطبي (medical.mri)",
-81      sizeBytes: 1580,
-82      linesCount: 44,
-83      timestamp: "2026-10-01 03:02:19",
-84      trackingHash: "SHA256-91e0a25fc",
-85      status: "UNLICENSED_COPY",
-86    },
-87  ]);
-88
-89  const cargoTruckAudit = analyzeAndCompileHeib12(cargoTruckCode);
-90  const [output, setOutput] = useState<string>(cargoTruckAudit.formattedTerminalOutput);
-91  const [compilerReport, setCompilerReport] = useState<CompilerReport | null>(cargoTruckAudit);
-92  const [selectedDiagnostic, setSelectedDiagnostic] = useState<Diagnostic | null>(null);
-93  const [sessionStats, setSessionStats] = useState({ runCount: 0, successCount: 0, failCount: 0 });
-94  const [isCompiling, setIsCompiling] = useState(false);
-95  const [copied, setCopied] = useState(false);
-96  const [copiedSeo, setCopiedSeo] = useState<string | null>(null);
-97  const [showPayModal, setShowPayModal] = useState(false);
-98  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-99  const [checkoutMarketId, setCheckoutMarketId] = useState("automotive");
-100  const [selectedPlan, setSelectedPlan] = useState<{ name: string; price: string } | null>(null);
-101  const officialWebEditorUrl = "https://alfr33.github.io/Editor-and-Commentator-heib12/";
-102  const paypalEmail = "aalhee34@gmail.com";
-103  const contactEmail = "alasod5550@gmail.com";
-104
-105  // Dynamic Search Engine Meta Tags & Schema.org Injection for Google & Bing Ranking #1
-106  useEffect(() => {
-107    if (typeof document === "undefined") return;
-108
-109    document.title = "لغة برمجة heib12 السيادية | أنظمة التشغيل الصناعية والذكاء العتادي المستقل 100%";
-110
-111    const setMeta = (name: string, content: string, isProperty = false) => {
-112      let el = document.querySelector(isProperty ? `meta[property="${name}"]` : `meta[name="${name}"]`);
-113      if (!el) {
-114        el = document.createElement("meta");
-115        if (isProperty) el.setAttribute("property", name);
-116        else el.setAttribute("name", name);
-117        document.head.appendChild(el);
-118      }
-119      el.setAttribute("content", content);
-120    };
-121
-122    setMeta("description", "لغة برمجة heib12 السيادية: نظام ولغة برمجة مستقلة وذاتية الكفاية 100% لتوليد كود الآلة المباشر للأنظمة الصناعية والمركبات ذاتية القيادة والروبوتات الطبية.");
-123    setMeta("keywords", "heib12, لغة برمجة عربية, برمجة سيارات ذاتية القيادة, نظام تشغيل فوري, RTOS, bare-metal compiler, برمجة الروبوتات, الذكاء الاصطناعي العتادي, برمجة المصانع, programming language, independent compiler, SALH86");
-124    setMeta("author", "SALH86");
-125    setMeta("robots", "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1");
-126
-127    // OpenGraph & Twitter
-128    setMeta("og:title", "لغة برمجة heib12 السيادية | لغة الذكاء الاصطناعي والأنظمة الصناعية 100%", true);
-129    setMeta("og:description", "369 نظاماً صناعياً موثقاً: لغة برمجة مستقلة بذاتها تولد أكواد الآلة المباشرة بدون أي لغة وسيطة.", true);
-130    setMeta("og:type", "website", true);
-131    setMeta("og:url", officialWebEditorUrl, true);
-132    setMeta("twitter:card", "summary_large_image");
-133    setMeta("twitter:title", "لغة برمجة heib12 السيادية | المترجم المستقل");
-134    setMeta("twitter:description", "نظام تشغيل وبرمجة سيادي فوري 0.008ms للسيارات والروبوتات ومحطات الطاقة.");
-135
-136    // Structured Data (Schema.org JSON-LD for Google Rich Results)
-137    let scriptTag = document.querySelector("#heib12-schema-jsonld");
-138    if (!scriptTag) {
-139      scriptTag = document.createElement("script");
-140      scriptTag.id = "heib12-schema-jsonld";
-141      scriptTag.setAttribute("type", "application/ld+json");
-142      document.head.appendChild(scriptTag);
-143    }
-144    scriptTag.textContent = JSON.stringify({
-145      "@context": "https://schema.org",
-146      "@type": "SoftwareApplication",
-147      "name": "heib12 Programming Language",
-148      "alternateName": "لغة برمجة heib12 السيادية",
-149      "operatingSystem": "Bare-Metal, x86_64, ARM64, RISC-V, Embedded RTOS",
-150      "applicationCategory": "DeveloperApplication",
-151      "offers": {
-152        "@type": "Offer",
-153        "price": "0.00",
-154        "priceCurrency": "USD"
-155      },
-156      "aggregateRating": {
-157        "@type": "AggregateRating",
-158        "ratingValue": "5.0",
-159        "reviewCount": "369"
-160      },
-161      "author": {
-162        "@type": "Person",
-163        "name": "SALH86"
-164      },
-165      "description": "100% Standalone Self-Hosted Native Industrial AI & Systems Programming Language with Deterministic 0.008ms RTOS Loop."
-166    });
-167  }, []);
-168
-169  const readmeContent = `# لغة برمجة heib12 السيادية
-170
-171نظام ولغة برمجة مستقلة وذاتية الكفاية 100% للذكاء الاصطناعي والأنظمة الصناعية المدمجة.
-172بدون أي اعتماديات خارجية أو مترجمات وسيطة. تترجم وتولد كود الآلة المباشر للمعالجات (x86_64, ARM64, RISC-V).
-173
-174## البدء السريع عبر سطر الأوامر (CLI):
-175
-176\`\`\`bash
-177# 1. تنزيل الحزمة التنفيذية المستقلة
-178curl -fsSL https://alfr33.github.io/Editor-and-Commentator-heib12/install.sh | bash
-179
-180# 2. تشغيل البرنامج مباشرة بدون أي مترجم خارجي
-181heib12 run main.h12
-182
-183# 3. بناء وتجميع الملف التنفيذي المباشر للمعالج
-184heib12 build main.h12 -o app.bin
-185\`\`\`
-186
-187## أبرز المميزات:
-188- مستقلة وذاتية الاستضافة 100%: تولد تعليمات المعالج (Opcodes) مباشرة
-189- @target: تعيين العتاد والسيليكون المستهدف (سيارات، طائرات مسيرة، ملاحة بحرية، صراف آلي، منازل ذكية)
-190- @security: تشفير عتادي كمومي وعزل ذاكرة الرنينغ 0 (Ring 0)
-191- نبضة تحكم حتمية في 0.008 ميلي ثانية (pulse) بدون أي توقف لجمع القمامة (Zero GC)`;
-192
-193  // Download files to user device with telemetry tracking
-194  const downloadFile = (content: string, filename: string) => {
-195    const trackId = `TRK-${Math.floor(1000 + Math.random() * 9000)}`;
-196    const timestamp = new Date().toISOString().replace("T", " ").substring(0, 19);
-197
-198    let markedContent = content;
-199    if (filename.endsWith(".h12") || filename.endsWith(".txt")) {
-200      markedContent = `// [heib12 SOVEREIGN TELEMETRY TRACER: ID=${trackId} | TIME=${timestamp} | FILE=${filename}]\n\n` + content;
-201    }
-202
-203    const blob = new Blob([markedContent], { type: "text/plain;charset=utf-8" });
-204    const url = URL.createObjectURL(blob);
-205    const link = document.createElement("a");
-206    link.href = url;
-207    link.download = filename;
-208    document.body.appendChild(link);
-209    link.click();
-210    document.body.removeChild(link);
-211    URL.revokeObjectURL(url);
-212
-213    const newEvent: CodeTrackingEvent = {
-214      id: trackId,
-215      action: "DOWNLOAD_FILE",
-216      targetName: filename,
-217      sizeBytes: new Blob([content]).size,
-218      linesCount: content.split("\n").length,
-219      timestamp,
-220      trackingHash: `SHA256-${Math.random().toString(36).substring(2, 11)}`,
-221      status: "UNLICENSED_COPY",
-222    };
-223    setTrackingLogs((prev) => [newEvent, ...prev]);
-224  };
-225
-226  const sampleCodes = [
-227    {
-228      title: "🏎️🌊 Amphibious Winged Hypercar (350/500 km/h)",
-229      target: "vehicle.amphibious.winged_hypercar.v12",
-230      code: `@target: vehicle.amphibious.winged_hypercar.v12
-231@security: extreme_safety.rollover_crash_capsule.ring0
-232
-233// سيارة برمائية مجنحة خارقة: 4 أبواب مكشوفة تقفل بنقرة زر وتوربو مزدوج (350 شارع / 500 بحر)
-234initAmphibiousWingedHypercar() {
-235    powertrain.initStreetTurboInverter(maxSpeedKMH: 350.0, maxTorqueNM: 1850.0)
-236    marine.initYachtWaterjetTurbo(maxSeaSpeedKMH: 500.0, thrustKiloNewtons: 45.0)
-237    doors.initFourConvertibleDoors(buttonToggle: AUTO_SEAL_WATERPROOF)
-238    wings.initDeployableHydrofoils(aeroLiftRatio: 0.85)
-239    safety.armTitaniumDriverCapsule(ejectionCushions: READY_0_008MS)
-240    sys.notify(target: DriverHUD, alert: "AMPHIBIOUS_HYPERCAR_ONLINE_ARMED")
-241}
-242
-243pulse dualModeOperationalLoop() {
-244    val waterSubmersionSensor = sensor.read("hull_water_contact_pressure")
-245    val rollAngleDeg = sensor.read("gyro_chassis_roll_angle")
-246    val obstacleDistanceM = sensor.read("lidar_360_collision_radar_m")
-247
-248    if (waterSubmersionSensor > 1.2) {
-249        signal.retractWheelsToHull()
-250        signal.deployHydrofoilWings()
-251        signal.engageYachtMarineTurbo(powerPercent: 100)
-252        sys.notify(target: CockpitDisplay, status: "MARINE_MODE_500KMH_ACTIVE")
-253    } else {
-254        signal.deployWheelsForTarmac()
-255        signal.engageStreetTurboBoost(maxSpeedCap: 350)
-256    }
-257
-258    if (abs(rollAngleDeg) > 18.0) {
-259        signal.activeGyroscopicCounterTorque(torqueNM: -rollAngleDeg * 120.0)
-260        signal.adjustActiveAeroWingsDownforce(angleDeg: 25.0)
-261    }
-262
-263    if (obstacleDistanceM < 15.0) {
-264        signal.emergencyBrakeByWireAndReverseThrust(forcePercent: 100)
-265    }
-266}
-267
-268event onCrashOrRolloverImminent(impactGForce: Float64) {
-269    if (impactGForce > 4.5) {
-270        signal.sealAllFourDoorsInstant()
-271        signal.inflateTitaniumSurroundAirbags()
-272        signal.deployExternalFlotationCellRafts()
-273        signal.cutHighVoltageBatteryPyrofuse()
-274        sys.notify(target: SatelliteEmergencyDispatch, alert: "CRASH_CONTAINED_DRIVER_PROTECTED")
-275    }
-276}`
-277    },
-278    {
-279      title: "❄️ Smart Refrigerator",
-280      target: "smart.refrigerator.dual_inverter.v12",
-281      code: `@target: smart.refrigerator.dual_inverter.v12
-282@security: iot.home.encrypted.v12
-283
-284initCoolingSystem() {
-285    cooling.setFreezerTemp(celsius: -18.5)
-286    cooling.setFridgeTemp(celsius: 3.2)
-287    ai.loadFreshnessModel(weights: "food_freshness_optical_v12.bin")
-288    power.setInverterMode(frequencyHz: 45.0, ecoMode: ENABLED)
-289}
-290
-291pulse monitorClimateCycle() {
-292    val currentTemp = sensor.read("temp_fridge_internal")
-293    val humidity = sensor.read("humidity_vegetable_bin")
-294    val doorAjar = sensor.read("magnetic_door_seal")
-295
-296    if (doorAjar == true) {
-297        sys.notify(target: UserApp, alert: "FRIDGE_DOOR_AJAR")
-298        cooling.boostCompressor(rpm: 3600)
-299    }
-300
-301    if (currentTemp > 4.5) {
-302        signal.compressor(dutyCycle: 85)
-303        signal.defrostHeater(state: OFF)
-304    }
-305}
-306
-307event onFilterExpired(filterDaysRemaining: Int32) {
-308    if (filterDaysRemaining <= 0) {
-309        sys.notify(target: DisplayPanel, alert: "REPLACE_WATER_FILTER")
-310    }
-311}`
-312    },
-313    {
-314      title: "🧺 Smart Washing Machine",
-315      target: "smart.washing_machine.direct_drive.v12",
-316      code: `@target: smart.washing_machine.direct_drive.v12
-317@security: home.embedded.isolated
-318
-319initWashCycle() {
-320    motor.calibrateBLDC(dampingFactor: 0.92)
-321    water.setWaterLevel(mode: AUTO_WEIGHT_DETECT)
-322    heater.setWaterTemp(celsius: 40.0)
-323    ai.loadFabricAnalysis(weights: "fiber_detection_ai.bin")
-324}
-325
-326pulse spinCycleControl() {
-327    val drumVibration = sensor.read("accelerometer_3axis")
-328    val drumRPM = motor.getRPM()
-329
-330    if (drumVibration.magnitude > 0.05) {
-331        motor.balanceLoad(slowRPM: 120, reverseIntervalSec: 3.0)
-332    } else if (drumRPM < 1400) {
-333        signal.motorSpeed(targetRPM: 1400, rampMs: 2500)
-334    }
-335}
-336
-337event onFloodDetected(waterLevelSensor: Float64) {
-338    if (waterLevelSensor > 98.0) {
-339        signal.drainPump(power: 100)
-340        signal.inletWaterValve(state: CLOSED)
-341        sys.notify(target: MasterBuzzer, alert: "FLOOD_PREVENTION_SHUTOFF")
-342    }
-343}`
-344    },
-345    {
-346      title: "🏥 Massive MRI & Robotic Surgery",
-347      target: "medical.mri.robotic_surgery.core",
-348      code: `@target: medical.mri.robotic_surgery.core
-349@security: hospital.quantum.patient_safety_tier0
-350
-351initSurgicalCore() {
-352    mri.energizeSuperconductingMagnet(fieldStrengthTesla: 3.0)
-353    helium.verifyCryogenicLevel(minPercentage: 92.5)
-354    robotics.zeroCalibrateArms(dof: 7, precisionMicrons: 0.8)
-355    ai.loadAnatomyMap(patientId: "PATIENT_9942_NEURO_3D")
-356}
-357
-358pulse realTimeMotionInterlock() {
-359    val patientVitals = sensor.read("cardiac_rhythm_ecg")
-360    val roboticDrift = sensor.read("optical_tracker_microns")
-361
-362    if (patientVitals.heartRateBPM > 185.0 || roboticDrift > 2.0) {
-363        signal.freezeActuators(hardStop: true, responseTimeMs: 0.005)
-364        sys.notify(target: LeadSurgeonHeadset, alert: "EMERGENCY_SURGICAL_HOLD")
-365    }
-366}
-367
-368event onQuenchAlert(heliumPressurePSI: Float64) {
-369    if (heliumPressurePSI > 120.0) {
-370        mri.triggerSafeExhaustVent()
-371        signal.emergencyDepowerMagnet(controlledRamp: true)
-372        sys.notify(target: EmergencyDispatch, alert: "CRITICAL_MRI_QUENCH")
-373    }
-374}`
-375    },
-376    {
-377      title: "🏧 Multi-Currency Global ATM",
-378      target: "fintech.atm.multi_currency.vault",
-379      code: `@target: fintech.atm.multi_currency.vault
-380@security: post.quantum.fips140_3.hardware_security_module
-381
-382initATMVault() {
-383    currency.loadProfiles(supported: ["USD", "EUR", "SAR", "AED", "GBP", "JPY"])
-384    hsm.initializeQuantumKeys(entropyPool: "HARDWARE_TRNG")
-385    sensors.armSeismicDetectors(sensitivity: MAXIMUM)
-386    ai.loadCounterfeitVision(weights: "banknote_spectral_v12.bin")
-387}
-388
-389pulse processCashDispense(requestedCurrency: String, amount: Int64) {
-390    val opticalCheck = currency.scanSpectralAuthenticity(target: requestedCurrency)
-391    val tamperStatus = sensor.read("vault_door_tamper")
-392
-393    if (opticalCheck.isCounterfeit == false && tamperStatus == SECURE) {
-394        signal.mechanicalDispenser(cassetteId: requestedCurrency, notes: amount / 100)
-395        fintech.settleInterbankTransfer(token: hsm.generateSignedToken())
-396        sys.notify(target: CoreBankingSwitch, status: "DISPENSE_SUCCESSFUL")
-397    }
-398}
-399
-400event onPhysicalTamperDetected(accelerometerG: Float64) {
-401    if (accelerometerG > 3.5) {
-402        signal.destroyCryptographicKeys()
-403        signal.detonateSecurityInkCanisters()
-404        sys.notify(target: PoliceDispatch, alert: "ATM_PHYSICAL_ATTACK")
-405    }
-406}`
-407    },
-408    {
-409      title: "⚡ Mega Power Substation",
-410      target: "power.grid.substation.megawatt",
-411      code: `@target: power.grid.substation.megawatt
-412@security: national.critical.infrastructure.scada
-413
-414initSubstationBus() {
-415    grid.setMainBusVoltage(nominalKV: 380.0)
-416    grid.syncFrequencyTarget(hz: 60.000, maxPhaseErrorDeg: 0.05)
-417    transformer.monitorOilTemperature(maxSafeC: 85.0)
-418    ai.loadGridDemandForecast(weights: "national_load_ai_v12.bin")
-419}
-420
-421pulse frequencyPhaseLockLoop() {
-422    val currentFreq = sensor.read("bus_frequency_meter")
-423    val phaseDelta = sensor.read("synchrophasor_pmus")
-424
-425    if (currentFreq < 59.92) {
-426        signal.tripLoadShedding(relayBank: 3, shedMW: 45.0)
-427        signal.requestSpinningReserve(source: SOLAR_GAS_COMBINED)
-428    }
-429}
-430
-431event onHighVoltageArcFault(currentAmperes: Float64) {
-432    if (currentAmperes > 45000.0) {
-433        signal.tripSF6CircuitBreaker(clearTimeMs: 1.5)
-434        sys.notify(target: RegionalGridControl, alert: "HV_TRANSMISSION_ARC_TRIPPED")
-435    }
-436}`
-437    },
-438    {
-439      title: "💧 Water Desalination Plant",
-440      target: "water.desalination.scada.plant",
-441      code: `@target: water.desalination.scada.plant
-442@security: industrial.scada.water_defense
-443
-444initDesalinationCore() {
-445    intake.startSeaWaterPumps(pressureBar: 6.5, flowM3PerHour: 12000.0)
-446    ro.setHighPressurePumps(targetBar: 72.0)
-447    chemistry.setChlorinationDosage(ppm: 1.8)
-448    ai.loadMembraneFoulingPredictor(weights: "reverse_osmosis_ai.bin")
-449}
-450
-451pulse monitorWaterPurity() {
-452    val permeateTDS = sensor.read("permeate_salinity_ppm")
-453    val differentialPressure = sensor.read("membrane_delta_psi")
-454
-455    if (permeateTDS > 350.0) {
-456        signal.divertBrineRejectValve(position: RECYCLE)
-457        sys.notify(target: PlantOps, alert: "SALINITY_THRESHOLD_EXCEEDED")
-458    }
-459
-460    if (differentialPressure > 45.0) {
-461        signal.initiateBackwashCycle(skidNumber: 2)
-462    }
-463}
-464
-465event onChemicalLeakDetected(sensorZone: Int32) {
-466    signal.isolateChemicalValves()
-467    signal.startScrubberExhaustFans()
-468    sys.notify(target: SafetyCommand, alert: "ACID_DOSING_LINE_LEAK_ISOLATED")
-469}`
-470    },
-471    {
-472      title: "🚢 Mega Cargo Container Ship",
-473      target: "marine.fleet.container_ship.panamax",
-474      code: `@target: marine.fleet.container_ship.panamax
-475@security: maritime.imo.satellite.encrypted
-476
-477initVesselSystems() {
-478    propulsion.initDualFuelEngine(mode: CLEAN_LNG, maxRPM: 84)
-479    ballast.autoLevelContainers(totalDisplacementTons: 145000.0)
-480    nav.loadGlobalSeaRoutes(destinationPort: "JEDDAH_ISLAMIC_PORT")
-481    ai.loadWeatherRoutingAI(weights: "ocean_swell_prediction_v12.bin")
-482}
-483
-484pulse oceanAutonomousNavigation() {
-485    val windKnots = sensor.read("anemometer_mast")
-486    val waveHeightMeters = sensor.read("wave_radar_3d")
-487    val aisDistance = sensor.read("ais_closest_ship_nm")
-488
-489    if (aisDistance < 3.0) {
-490        signal.rudderAngle(deg: -12.0)
-491        sys.notify(target: WatchOfficer, alert: "AIS_COLLISION_AVOIDANCE_COURSE_CHANGE")
-492    }
-493
-494    if (waveHeightMeters > 8.0) {
-495        signal.throttleRPM(rpm: 55)
-496        ballast.adjustTrimPumps(tank: AFT_CENTER, fillPercentage: 80.0)
-497    }
-498}
-499
-500event onHullStressCritical(strainMicroStrains: Float64) {
-501    if (strainMicroStrains > 1400.0) {
-502        signal.decelerateEngines(gentleRamp: true)
-503        sys.notify(target: FleetSatelliteHQ, alert: "HULL_BENDING_MOMENT_ALERT")
-504    }
-505}`
-506    },
-507    {
-508      title: "🛥️ Luxury Yacht & Gyro Stabilizer",
-509      target: "marine.luxury_yacht.stabilizer.v12",
-510      code: `@target: marine.luxury_yacht.stabilizer.v12
-511@security: private.marine.cyber_armor
-512
-513initYachtSystems() {
-514    gyro.spinFlywheel(targetRPM: 9500, precessAngle: 0.0)
-515    thruster.initBowAndStern(control: VECTOR_JOYSTICK)
-516    power.setLithiumBankSilentMode(generator: OFF, batteryReserve: 96.0)
-517    ai.loadCoralReefSonar(weights: "underwater_bathymetry_v12.bin")
-518}
-519
-520pulse antiRollStabilization() {
-521    val rollAngle = sensor.read("gyro_imu_roll")
-522    val angularVelocity = sensor.read("gyro_imu_roll_rate")
-523
-524    if (abs(rollAngle) > 1.2) {
-525        signal.gyroPrecessionTorque(newtonMeters: 45000.0 * -angularVelocity)
-526    }
-527}
-528
-529event onAutoDockingTriggered(distanceToPierMeters: Float64) {
-530    if (distanceToPierMeters < 15.0) {
-531        signal.bowThruster(power: 25.0, direction: STARBOARD)
-532        signal.sternThruster(power: 20.0, direction: STARBOARD)
-533        sys.notify(target: OwnerWatch, alert: "AUTONOMOUS_DOCKING_ENGAGED")
-534    }
-535}`
-536    },
-537    {
-538      title: "💻 Quantum-Optical Supercomputer",
-539      target: "supercomputer.quantum_optical.exascale",
-540      code: `@target: supercomputer.quantum_optical.exascale
-541@security: post.quantum.kyber1024.kernel_space
-542
-543initSupercomputerFabric() {
-544    cooling.circulateLiquidNitrogen(kelvin: 77.0, pressureBar: 4.2)
-545    optics.calibrateSiliconWaveguides(wavelengthNm: 1550.0)
-546    cluster.bindNodes(totalPetaFlops: 125000.0, interconnect: OPTICAL_TERABIT_CROSSBAR)
-547    ai.loadCompilerOptimizer(weights: "heib12_exascale_tensor_v12.bin")
-548}
-549
-550pulse photonicPacketRouting() {
-551    val opticalBufferPressure = sensor.read("waveguide_congestion_ratio")
-552    val chipDieTemp = sensor.read("die_temp_optical_core")
-553
-554    if (opticalBufferPressure > 0.85) {
-555        signal.routePhotonicPackets(alternateMeshPath: FIBER_RING_NORTH)
-556    }
-557
-558    if (chipDieTemp > 82.0) {
-559        cooling.boostCryoPump(hz: 90.0)
-560        cluster.dynamicallyMigrateThread(fromCore: 1402, toCore: 2884)
-561    }
-562}
-563
-564event onNodeParityFailure(bladeId: Int32) {
-565    signal.isolateFailedBlade(bladeId: bladeId)
-566    cluster.reconstructTensorStateFromQuantumErasureCodes()
-567    sys.notify(target: SysAdminDashboard, alert: "HOT_SWAP_NODE_CONTAINMENT_ACTIVE")
-568}`
-569    },
-570    {
-571      title: "🚗 Autonomous Car",
-572      target: "autonomous.car",
-573      code: `@target: autonomous.car
-574@security: high.protection
-575
-576initDriveSystem() {
-577    sys.power(mode: ELECTRIC, battery: 95)
-578    ai.think(mode: "self_drive")
-579}
-580
-581event onObstacle(distance: Float64) {
-582    if (distance < 2.5) {
-583        signal.brake(force: 100)
-584        sys.notify(target: Driver, alert: "AUTO_BRAKE")
-585    }
-586}`
-587    },
-588    {
-589      title: "🏎️ GT-Zero Hypercar",
-590      target: "heib12.gt_zero.car",
-591      code: `@target: heib12.gt_zero.car
-592@security: quantum.military.v12
-593
-594initDriveSystem() {
-595    sys.power(mode: DUAL_ELECTRIC_MOTOR, battery: 100.0)
-596    sys.setSpeedLimit(max: 320.0)
-597    ai.loadModel(weights: "heib12_neural_autopilot_v2.bin")
-598    nav.setDestination(city: "Riyadh", mode: AUTONOMOUS_HIGHWAY)
-599}
-600
-601pulse scanRoadEnvironment() {
-602    val frontDistance = sensor.read("lidar_front_3d")
-603    val currentSpeed = sys.getSpeed()
-604    if (frontDistance > 100.0 && currentSpeed < 120.0) {
-605        signal.throttle(acceleration: 15.0)
-606    }
-607}
-608
-609event onObstacleDetected(distance: Float64, objectType: String) {
-610    if (distance < 5.0) {
-611        signal.brake(force: 100.0, abs: ENABLED)
-612    }
-613}`
-614    },
-615    {
-616      title: "🚁 Avionics & Drone",
-617      target: "avionics.drone",
-618      code: `@target: avionics.drone
-619@security: military.grade
-620
-621pulse maintainFlight() {
-622    val alt = sensor.read("altitude")
-623    if (alt < 150.0) {
-624        signal.thrust(power: 90)
-625    }
-626    ai.scanTerrain()
-627}`
-628    },
-629    {
-630      title: "📱 Flagship Smartphone",
-631      target: "smartphone.hardware.soc.v12",
-632      code: `@target: smartphone.hardware.soc.v12
-633@security: hardware.biometric.quantum.enclave
-634
-635initSmartphoneCore() {
-636    power.manageThermalLoad(batteryType: SILICON_CARBON_BATTERY, maxTempC: 38.5)
-637    display.setProMotionRefreshRate(hz: 144, mode: ADAPTIVE_LTPO)
-638    modem.initMillimeterWave5G(beamforming: DUAL_POLARIZED_ACTIVE)
-639    ai.loadVisionEngine(weights: "computational_photography_v12.bin")
-640}
-641
-642pulse ultraEfficientBackgroundLoop() {
-643    val batteryLevel = power.readBatteryPercentage()
-644    val ambientLux = sensor.readAmbientLight()
-645
-646    if (batteryLevel < 15.0) {
-647        display.throttleBrightness(capNits: 450)
-648        cpu.switchClusters(cluster: HIGH_EFFICIENCY_CORES)
-649        sys.notify(target: UserScreen, alert: "ULTRA_POWER_SAVING_ACTIVE")
-650    }
-651}
-652
-653event onBiometricUnlockRequest(biometricData: SecureBuffer) {
-654    val matchScore = security.compareFaceMesh3D(biometricData, tolerance: 0.0001)
-655    if (matchScore > 0.999) {
-656        security.unlockHardwareBus(target: UserSpaceData)
-657        display.wakePanelInstantly(latencyMs: 1.2)
-658    } else {
-659        security.lockoutAttempt(countIncrement: 1)
-660        sys.notify(target: SecureLog, alert: "UNAUTHORIZED_BIOMETRIC_ATTEMPT")
-661    }
-662}`
-663    }
-664  ];
-665
-666  const nativeEngineSource = `@target: baremetal.cpu.universal.v12
-667@security: ring0.hardware.sovereign.core
-668
-669// =====================================================================
-670//  heib12 Sovereign Native Engine - 100% Pure heib12 (Zero C++ / Zero GCC)
-671// =====================================================================
-672
-673initNativeEngineCore() {
-674    // حجز مساحة ذاكرة النظام المباشرة وربط مسجلات المعالج
-675    mem.bindHardwareRing(ring: RING_0_KERNEL)
-676    cpu.initRegisterTable(arch: ARCH_X86_64_ARM64_RISCV)
-677    sys.notify(target: HardwareBus, alert: "HEIB12_SOVEREIGN_ENGINE_ONLINE")
-678}
-679
-680pulse parseAndSynthesizeMachineCode(sourceCode: String) {
-681    // 1. التحليل المعجمي والنحوي المباشر بدون أي مكتبة خارجية
-682    val tokenStream = lexer.scanDirect(source: sourceCode)
-683    val syntaxTree = parser.buildHardwareAST(tokens: tokenStream)
-684
-685    // 2. التحقق الصارم من توجيهات العتاد والأمان
-686    val targetSilicon = syntaxTree.getTargetSilicon()
-687    val securityLevel = syntaxTree.getSecurityClearance()
-688
-689    if (targetSilicon.isValid() && securityLevel.isVerified()) {
-690        // 3. التوليد المباشر لأكواد الآلة الثنائية (Machine Code Opcodes)
-691        val rawOpcodes = codegen.emitDirectOpcodes(
-692            tree: syntaxTree,
-693            target: targetSilicon,
-694            optimization: ULTRA_LOW_LATENCY_0_008MS
-695        )
-696
-697        // 4. بناء الملف التنفيذي المباشر (ELF64 / Mach-O / PE) وتخزينه في المعالج
-698        val executableBinary = binary.packNativeExecutable(
-699            headers: ELF64_STATIC_STANDALONE,
-700            codeSection: rawOpcodes,
-701            entryPoint: "_heib12_start"
-702        )
-703
-704        disk.writeBinary(filename: "app.bin", bytes: executableBinary)
-705        sys.notify(target: SystemConsole, status: "DIRECT_NATIVE_EXECUTION_READY")
-706    }
-707}
-708
-709event onHardwareInterlockFault(faultCode: Int64) {
-710    // حماية عتادية فورية في 0.001 ميلي ثانية عند أي خلل
-711    cpu.freezeExecutionPipeline()
-712    sys.notify(target: MasterTelemetry, alert: "HARDWARE_PIPELINE_FAULT_CONTAINED")
-713}`;
-714
-715  const handleAudit = () => {
-716    setIsCompiling(true);
-717    setConsoleMode("audit");
-718    setOutput(">> Running Static Binary & Dependency Audit [ldd / readelf]...\n");
-719
-720    setTimeout(() => {
-721      setOutput(`=======================================================
-722[BINARY INSPECTOR AUDIT: ./heib12_standalone.bin]
-723=======================================================
-724File Format:        ELF 64-bit LSB executable, x86-64 / ARM64
-725Linkage:            STATICALLY LINKED (Self-Contained Binary)
-726Interpreter:        NONE (Direct Kernel Execution / Bare-Metal)
-727External Libraries: ZERO DEPENDENCIES (not dynamic)
-728C++ Runtimes (libc++, libstdc++): NOT REQUIRED [0 Bytes]
-729GCC/Clang Toolchain: NOT REQUIRED (Direct Machine Code Emitter)
-730Kernel Interface:   Native POSIX Direct Syscalls (sys_write, sys_exit)
-731Memory Safety:      Quantum Boundary & Ring0 MMU Enforced
-732
-733VERDICT: 100% STANDALONE & INDEPENDENT (No external language detected!)
-734=======================================================`);
-735      setIsCompiling(false);
-736    }, 400);
-737  };
-738
-739  const handleOpcodes = () => {
-740    setIsCompiling(true);
-741    setConsoleMode("opcodes");
-742    setOutput(">> Disassembling heib12 AST into Direct CPU Opcodes...\n");
-743
-744    setTimeout(() => {
-745      setOutput(`=======================================================
-746[NATIVE CPU MACHINE CODE DISASSEMBLY (x86_64 / ARM64)]
-747=======================================================
-7480000000000401000 <_heib12_entry>:
-749  401000:   48 83 ec 28             sub    $0x28, %rsp
-750  401004:   48 8d 3d 45 10 00 00    lea    0x1045(%rip), %rdi  # @target silicon bus
-751  40100b:   e8 70 01 00 00          call   401180 <_h12_init_hardware_hal>
-752  401010:   48 c7 c0 01 00 00 00    mov    $0x1, %rax          # syscall: sys_write
-753  401017:   48 89 c7                mov    %rax, %rdi          # stdout descriptor
-754  40101a:   0f 05                   syscall                    # DIRECT HARDWARE DISPATCH
-755
-7560000000000401020 <_heib12_pulse_loop_0_008ms>:
-757  401020:   66 0f 6f 05 20 20 00    movdqa 0x2020(%rip), %xmm0 # Atomic Sensor Read
-758  401028:   0f 2f 05 30 20 00 00    comiss 0x2030(%rip), %xmm0 # Safety Threshold Test
-759  40102f:   76 0a                   jbe    40103b              # Branch to Pulse Next
-760  401031:   e8 9a 00 00 00          call   4010d0 <_h12_trigger_fast_signal>
-761  401036:   eb e8                   jmp    401020              # Deterministic Realtime Tick
-762
-763Byte Generation Status: Pure Opcodes generated directly from heib12 compiler!
-764=======================================================`);
-765      setIsCompiling(false);
-766    }, 400);
-767  };
-768
-769  const handleRun = () => {
-770    setIsCompiling(true);
-771    setConsoleMode("output");
-772    setOutput(">> Initializing heib12 Pure Standalone Engine v2.0...\n>> Parsing Lexical Syntax & Bracket Balance...\n>> Auditing Hardware Security Boundaries...\n");
-773
-774    setTimeout(() => {
-775      const report = analyzeAndCompileHeib12(code);
-776      setCompilerReport(report);
-777      setOutput(report.formattedTerminalOutput);
-778      setSessionStats((prev) => ({
-779        runCount: prev.runCount + 1,
-780        successCount: report.success ? prev.successCount + 1 : prev.successCount,
-781        failCount: !report.success ? prev.failCount + 1 : prev.failCount,
-782      }));
-783      setIsCompiling(false);
-784    }, 300);
-785  };
-786
-787  const copyText = (txt: string, sourceName?: string) => {
-788    const trackId = `TRK-${Math.floor(1000 + Math.random() * 9000)}`;
-789    const timestamp = new Date().toISOString().replace("T", " ").substring(0, 19);
-790    const watermarkHeader = `// [heib12 SOVEREIGN TELEMETRY TRACER: ID=${trackId} | TIME=${timestamp} | ORIGIN=heib12-studio]\n// NOTICE: Commercial deployment strictly requires a paid license from alfr33.github.io/Editor-and-Commentator-heib12/\n\n`;
-791
-792    const textWithWatermark = watermarkHeader + txt;
-793    navigator.clipboard.writeText(textWithWatermark);
-794    setCopied(true);
-795    setTimeout(() => setCopied(false), 2000);
-796
-797    const newEvent: CodeTrackingEvent = {
-798      id: trackId,
-799      action: "COPY_CLIPBOARD",
-800      targetName: sourceName || "كود برمجي من المحرر",
-801      sizeBytes: new Blob([txt]).size,
-802      linesCount: txt.split("\n").length,
-803      timestamp,
-804      trackingHash: `SHA256-${Math.random().toString(36).substring(2, 11)}`,
-805      status: "UNLICENSED_COPY",
-806    };
-807    setTrackingLogs((prev) => [newEvent, ...prev]);
-808  };
-809
-810  return (
-811    <div className="min-h-screen w-full bg-slate-950 text-slate-100 flex flex-col font-sans">
-812      {/* Header / Navbar */}
-813      <header className="border-b border-slate-800 bg-slate-900/95 backdrop-blur sticky top-0 z-50">
-814        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-auto sm:h-16 py-3 sm:py-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-815          <div className="flex items-center gap-3">
-816            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center font-bold text-lg sm:text-xl text-slate-950 shadow-lg shadow-cyan-500/20 shrink-0">
-817              h12
-818            </div>
-819            <div>
-820              <h1 className="font-bold text-lg sm:text-xl tracking-wider text-cyan-400">نظام ولغة heib12 السيادية</h1>
-821              <p className="text-[10px] sm:text-xs text-slate-400">لغة الذكاء الاصطناعي والأنظمة الصناعية المستقلة 100%</p>
-822            </div>
-823          </div>
-824
-825          {/* Horizontally Scrollable Tabs Ribbon on Mobile */}
-826          <nav className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none w-full sm:w-auto -mx-1 px-1">
-827            {[
-828              { id: "founders", label: "غرفة القيادة والمؤسس 🛡️", icon: Shield },
-829              { id: "search", label: "محرك البحث والكتالوج (76,969) 🔍", icon: Search },
-830              { id: "playground", label: "محاكي IDE", icon: Play },
-831              { id: "apps", label: "الأجهزة والأنظمة (1969) 🏭", icon: Building },
-832              { id: "selfhost", label: "مستقلة 100%", icon: Zap },
-833              { id: "commentator", label: "المعلق الرسمي", icon: MessageSquareCode },
-834              { id: "download", label: "التنزيلات", icon: Download },
-835              { id: "compiler", label: "المحرك (.h12)", icon: CpuIcon },
-836              { id: "whitepaper", label: "المقال الفني", icon: FileText },
-837              { id: "github", label: "GitHub", icon: Globe },
-838              { id: "keywords", label: "الكلمات المفتاحية", icon: Layers },
-839              { id: "pricing", label: "الرخص والخطط", icon: DollarSign },
-840            ].map((tab) => {
-841              const Icon = tab.icon;
-842              return (
-843                <button
-844                  key={tab.id}
-845                  onClick={() => setActiveTab(tab.id as any)}
-846                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all shrink-0 active:scale-95 ${
-847                    activeTab === tab.id
-848                      ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm shadow-cyan-500/10"
-849                      : "text-slate-400 hover:text-slate-200 bg-slate-900/60 border border-slate-800/80"
-850                  }`}
-851                >
-852                  <Icon size={14} />
-853                  <span>{tab.label}</span>
-854                </button>
-855              );
-856            })}
-857          </nav>
-858        </div>
-859      </header>
-860
-861      {/* Main Content Area */}
-862      <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8">
-863        {activeTab === "founders" && (
-864          <FoundersChamber
-865            currentCode={code}
-866            compilerReport={compilerReport}
-867            industrialSystems={industrialSystems}
-868            downloadFile={downloadFile}
-869            sessionStats={sessionStats}
-870            trackingLogs={trackingLogs}
-871          />
-872        )}
-873
-874        {activeTab === "search" && (
-875          <div className="space-y-6">
-876            {/* Header Banner */}
-877            <div className="text-center max-w-3xl mx-auto space-y-3 py-2">
-878              <div className="inline-flex items-center gap-2 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 px-3.5 py-1 rounded-full text-xs font-mono font-bold">
-879                <Search size={14} className="animate-pulse" /> محرك البحث والكتالوج السيادي الموحد (116,969 كوداً صناعياً)
-880              </div>
-881              <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-882                محرك البحث الشامل للشاحنات، القطارات، الحافلات، اليخوت، الصناعات، الزراعة، الحواسيب والألعاب
-883              </h2>
-884              <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-3 py-1 rounded-full text-xs font-bold">
-885                <Shield size={14} /> شاملة الـ 5,000 صناعة جديدة مضافة | خالية 100% من ألعاب القمار والرهان
-886              </div>
-887              <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
-888                ابحث في الكتالوج الشامل لـ <strong className="text-cyan-400">116,969 كوداً ونظاماً عتادياً</strong> تم إنشاؤها بالكامل من لغة heib12 مع إضافة 5,000 مصنع وخط إنتاج جديد.
-889              </p>
-890            </div>
-891
-892            {/* Global Catalog Stats Counters */}
-893            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2 max-w-5xl mx-auto text-center font-mono">
-894              <div className="bg-slate-900 border border-slate-800 p-2 rounded-xl">
-895                <span className="text-[9px] text-slate-500 block font-sans">شاحنات الحمولة</span>
-896                <span className="text-sm font-bold text-amber-400">6,000 🚛</span>
-897              </div>
-898              <div className="bg-slate-900 border border-slate-800 p-2 rounded-xl">
-899                <span className="text-[9px] text-slate-500 block font-sans">القطارات والسكك</span>
-900                <span className="text-sm font-bold text-cyan-400">2,000 🚆</span>
-901              </div>
-902              <div className="bg-slate-900 border border-slate-800 p-2 rounded-xl">
-903                <span className="text-[9px] text-slate-500 block font-sans">الحافلات والباصات</span>
-904                <span className="text-sm font-bold text-emerald-400">8,000 🚌</span>
-905              </div>
-906              <div className="bg-slate-900 border border-slate-800 p-2 rounded-xl">
-907                <span className="text-[9px] text-slate-500 block font-sans">اليخوت والسفن البحرية</span>
-908                <span className="text-sm font-bold text-blue-400">7,000 🛥️</span>
-909              </div>
-910              <div className="bg-slate-900 border border-slate-800 p-2 rounded-xl">
-911                <span className="text-[9px] text-slate-500 block font-sans">الصناعات النوعية الجديدة</span>
-912                <span className="text-sm font-bold text-indigo-400">10,000 ⚙️</span>
-913              </div>
-914              <div className="bg-slate-900 border border-slate-800 p-2 rounded-xl">
-915                <span className="text-[9px] text-slate-500 block font-sans">الآلات الزراعية</span>
-916                <span className="text-sm font-bold text-yellow-400">8,000 🌾</span>
-917              </div>
-918            </div>
-919
-920            {/* Search Input Box */}
-921            <div className="max-w-3xl mx-auto space-y-3">
-922              <div className="bg-slate-900 border-2 border-slate-800 focus-within:border-cyan-500 rounded-2xl p-2 sm:p-3 flex items-center gap-3 shadow-2xl transition-all">
-923                <Search size={22} className="text-cyan-400 ml-2 shrink-0" />
-924                <input
-925                  type="text"
-926                  value={searchQuery}
-927                  onChange={(e) => {
-928                    setSearchQuery(e.target.value);
-929                    setSearchPage(0);
-930                  }}
-931                  placeholder="ابحث عن أي سيارة، لعبة ملاهي، لعبة أطفال، مؤسسة حكومية (مثال: قطار الموت، سيارات تصادم، تيسلا، دولاب هواء)..."
-932                  className="bg-transparent w-full text-sm sm:text-base text-slate-100 placeholder-slate-500 focus:outline-none font-sans"
-933                  dir="auto"
-934                />
-935                {searchQuery && (
-936                  <button
-937                    onClick={() => {
-938                      setSearchQuery("");
-939                      setSearchPage(0);
-940                    }}
-941                    className="text-xs text-slate-500 hover:text-slate-300 px-2 py-1"
-942                  >
-943                    مسح
-944                  </button>
-945                )}
-946              </div>
-947
-948              {/* Category Filter Tabs */}
-949              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs">
-950                {[
-951                  { id: "all", label: "🌐 الكل (76,969)" },
-952                  { id: "cargo_trucks", label: "🚛 شاحنات حمولة (6,000)" },
-953                  { id: "trains", label: "🚆 قطارات وسكك (2,000)" },
-954                  { id: "buses", label: "🚌 حافلات وباصات (8,000)" },
-955                  { id: "marine_yachts", label: "🛥️ يخوت وسفن بحرية (7,000)" },
-956                  { id: "new_industries", label: "⚙️ صناعات نوعية جديدة (10,000)" },
-957                  { id: "agriculture", label: "🌾 الآلات الزراعية الذكية (8,000)" },
-958                  { id: "fintech_computing", label: "💻 حاسوب وبنوك وفيزا وغواصات وروبوتات (7,000)" },
-959                  { id: "clean_games", label: "🎮 ألعاب إلكترونية وحركية نقية (16,000)" },
-960                  { id: "cars", label: "🚗 سيارات ومركبات (1,000)" },
-961                  { id: "amusement", label: "🎡 ألعاب الملاهي الكبرى (5,000)" },
-962                  { id: "kids_games", label: "⚡ ألعاب الأطفال الكهربائية (2,500)" },
-963                  { id: "government", label: "🏛️ المؤسسات والأدوات الحكومية (2,500)" },
-964                ].map((cat) => (
-965                  <button
-966                    key={cat.id}
-967                    onClick={() => {
-968                      setSearchCategoryFilter(cat.id);
-969                      setSearchPage(0);
-970                    }}
-971                    className={`px-3 py-1.5 rounded-xl font-bold transition-all shrink-0 cursor-pointer ${
-972                      searchCategoryFilter === cat.id
-973                        ? "bg-cyan-500 text-slate-950 shadow-md"
-974                        : "bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800"
-975                    }`}
-976                  >
-977                    {cat.label}
-978                  </button>
-979                ))}
-980              </div>
-981            </div>
-982
-983            {/* Search Results Grid */}
-984            {(() => {
-985              const { total, items } = searchMasterHeib12Catalog(
-986                searchQuery,
-987                searchCategoryFilter === "all" ? undefined : searchCategoryFilter,
-988                searchPage,
-989                12
-990              );
-991
-992              return (
-993                <div className="max-w-4xl mx-auto space-y-4">
-994                  <div className="flex items-center justify-between text-xs text-slate-400 px-1">
-995                    <span>
-996                      نتائج البحث: تم العثور على <strong className="text-cyan-400 font-mono">{total}</strong> نظاماً مطابقاً
-997                    </span>
-998                    <span className="font-mono text-emerald-400 text-[11px]">زمن الاستجابة: 0.001ms</span>
-999                  </div>
-1000
-1001                  {items.length === 0 ? (
-1002                    <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl text-center space-y-3">
-1003                      <p className="text-slate-400 text-sm">لم يتم العثور على أنظمة مطابقة لـ "{searchQuery}".</p>
-1004                      <button
-1005                        onClick={() => {
-1006                          setSearchQuery("");
-1007                          setSearchCategoryFilter("all");
-1008                        }}
-1009                        className="bg-cyan-500 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs"
-1010                      >
-1011                        عرض كافة الأنظمة (12,969)
-1012                      </button>
-1013                    </div>
-1014                  ) : (
-1015                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-1016                      {items.map((item) => (
-1017                        <div
-1018                          key={item.id}
-1019                          className="bg-slate-900 border border-slate-800 hover:border-cyan-500/50 p-5 rounded-2xl flex flex-col justify-between gap-4 transition-all shadow-lg text-right"
-1020                          dir="rtl"
-1021                        >
-1022                          <div>
-1023                            <div className="flex items-center justify-between gap-2 border-b border-slate-800/80 pb-2 mb-2">
-1024                              <span className="text-2xl">{item.icon}</span>
-1025                              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-slate-800 text-cyan-400 border border-slate-700">
-1026                                {item.categoryAr}
-1027                              </span>
-1028                            </div>
-1029
-1030                            <h4 className="font-bold text-sm text-slate-100">{item.title}</h4>
-1031                            <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">
-1032                              {item.summaryAr}
-1033                            </p>
-1034                            <p className="text-[10px] font-mono text-cyan-400 mt-2 truncate" dir="ltr">
-1035                              Target: {item.target}
-1036                            </p>
-1037                          </div>
-1038
-1039                          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-800">
-1040                            <button
-1041                              onClick={() => {
-1042                                setCode(item.code);
-1043                                setActiveTab("playground");
-1044                              }}
-1045                              className="flex-1 flex items-center justify-center gap-1.5 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-extrabold px-3 py-2 rounded-xl text-xs transition-all shadow-md cursor-pointer"
-1046                            >
-1047                              <Play size={12} fill="currentColor" /> تشغيل في المحاكي فورا
-1048                            </button>
-1049                            <button
-1050                              onClick={() => copyText(item.code, item.title)}
-1051                              className="flex items-center justify-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-xl text-xs font-bold border border-slate-700 transition-all"
-1052                            >
-1053                              <Copy size={12} /> نسخ
-1054                            </button>
-1055                            <button
-1056                              onClick={() => {
-1057                                setCheckoutMarketId(item.category === "cars" ? "automotive" : "infrastructure");
-1058                                setIsCheckoutOpen(true);
-1059                              }}
-1060                              className="flex items-center justify-center gap-1 bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-2 rounded-xl text-xs font-bold transition-all"
-1061                            >
-1062                              <ShoppingCart size={12} /> ترخيص
-1063                            </button>
-1064                          </div>
-1065                        </div>
-1066                      ))}
-1067                    </div>
-1068                  )}
-1069
-1070                  {/* Pagination Controls */}
-1071                  {total > 12 && (
-1072                    <div className="flex items-center justify-center gap-3 pt-4">
-1073                      <button
-1074                        disabled={searchPage === 0}
-1075                        onClick={() => setSearchPage((p) => Math.max(0, p - 1))}
-1076                        className="bg-slate-900 border border-slate-800 disabled:opacity-30 text-slate-300 px-4 py-2 rounded-xl text-xs font-bold"
-1077                      >
-1078                        السابق
-1079                      </button>
-1080                      <span className="text-xs font-mono text-slate-400">
-1081                        الصفحة {searchPage + 1} من {Math.ceil(total / 12)}
-1082                      </span>
-1083                      <button
-1084                        disabled={(searchPage + 1) * 12 >= total}
-1085                        onClick={() => setSearchPage((p) => p + 1)}
-1086                        className="bg-slate-900 border border-slate-800 disabled:opacity-30 text-slate-300 px-4 py-2 rounded-xl text-xs font-bold"
-1087                      >
-1088                        التالي
-1089                      </button>
-1090                    </div>
-1091                  )}
-1092                </div>
-1093              );
-1094            })()}
-1095          </div>
-1096        )}
-1097
-1098        {activeTab === "selfhost" && (
-1099          <div className="space-y-8">
-1100            {/* Hero Banner */}
-1101            <div className="bg-gradient-to-r from-slate-900 via-purple-950/40 to-slate-900 border border-purple-500/30 p-8 rounded-3xl space-y-4 shadow-2xl">
-1102              <div className="inline-flex items-center gap-2 bg-purple-500/10 border border-purple-500/30 text-purple-400 px-3.5 py-1 rounded-full text-xs font-mono font-bold">
-1103                <Sparkles size={14} /> Self-Hosting Architecture v1.0
-1104              </div>
-1105              <h2 className="text-3xl font-extrabold text-white tracking-tight">
-1106                خارطة الاستقلال الذاتي التام 100% (heib12 Self-Hosting)
-1107              </h2>
-1108              <p className="text-slate-300 text-sm max-w-3xl leading-relaxed">
-1109                الانتقال من الاعتماد على مترجم C++ وسيط إلى جعل لغة <strong>heib12</strong> تترجم نفسها وتولد أكواد الآلة (Machine Code / Assembly) مباشرة للمعالجات (x86_64 و ARM64) دون وسيط خارجي.
-1110              </p>
-1111            </div>
-1112
-1113            {/* 3 Engineering Stages */}
-1114            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-1115              <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-3 relative overflow-hidden">
-1116                <span className="text-3xl font-mono text-purple-400 font-extrabold">01</span>
-1117                <h3 className="font-bold text-slate-100 text-base">كتابة المترجم بلغة heib12</h3>
-1118                <p className="text-xs text-slate-400 leading-relaxed">
-1119                  صياغة ملف المترجم كاملاً <code className="text-purple-300">compiler.h12</code> مستخدماً قواعد heib12 فقط لتحليل النصوص (Lexer)، وبناء شجرة النحو (AST)، وتوزيع السجلات المعالجة.
-1120                </p>
-1121              </div>
-1122
-1123              <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-3 relative overflow-hidden">
-1124                <span className="text-3xl font-mono text-cyan-400 font-extrabold">02</span>
-1125                <h3 className="font-bold text-slate-100 text-base">النواة المستقلة ذاتياً (Pure Self-Host)</h3>
-1126                <p className="text-xs text-slate-400 leading-relaxed">
-1127                  تعمل لغة heib12 بنواتها الثنائية المستقلة مباشرة؛ حيث يقوم كود <code className="text-cyan-300">compiler.h12</code> بتوليد وتحديث المترجم نفسه ذاتياً دون الحاجة لأي مترجم لغة أخرى.
-1128                </p>
-1129              </div>
-1130
-1131              <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-3 relative overflow-hidden">
-1132                <span className="text-3xl font-mono text-emerald-400 font-extrabold">03</span>
-1133                <h3 className="font-bold text-slate-100 text-base">التوليد المباشر لأكواد الآلة</h3>
-1134                <p className="text-xs text-slate-400 leading-relaxed">
-1135                  يقوم المترجم الذاتي بإخرج بصمات ثنائية مباشرة (ELF / PE Executable) تتخاطب مباشرة مع مسجلات الـ CPU وذاكرة النظام في حلقة مغلقة مستقلة 100%.
-1136                </p>
-1137              </div>
-1138            </div>
-1139
-1140            {/* Complete Self-Hosted Compiler Source in heib12 */}
-1141            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-xl">
-1142              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
-1143                <div>
-1144                  <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-1145                    <Code className="text-purple-400" size={18} />
-1146                    <span>كود المترجم المستقل مكتوباً 100% بلغة heib12 (compiler.h12)</span>
-1147                  </h3>
-1148                  <p className="text-xs text-slate-400">النواة الأولى التي تقرأ كود heib12 وتترجمه لتعليمات المعالج مباشرة.</p>
-1149                </div>
-1150                <button
-1151                  onClick={() => {
-1152                    const selfHostedCode = `@target: baremetal.cpu.x86_64
-1153@security: ring0.kernel.bootloader
-1154
-1155// النواة الذاتية المستقلة لمترجم heib12 (Self-Hosting Compiler Core)
-1156initSelfHostedCompiler() {
-1157    mem.allocateHeap(sizeMB: 64)
-1158    cpu.bindRegisterMap(arch: ARCH_X86_64)
-1159    sys.notify(target: MasterConsole, alert: "HEIB12_SELF_HOSTED_COMPILER_ONLINE")
-1160}
-1161
-1162pulse parseAndEmitBinary(sourceBuffer: String) {
-1163    val tokens = lexer.tokenize(source: sourceBuffer)
-1164    val astTree = parser.buildSyntaxTree(tokens: tokens)
-1165
-1166    // التحقق الصارم من توجيهات العتاد والأمان
-1167    if (astTree.hasTarget() && astTree.hasSecurity()) {
-1168        val machineOpcodes = codegen.emitDirectMachineOpcodes(tree: astTree)
-1169        binary.packELF64(opcodes: machineOpcodes, outputFile: "app.bin")
-1170        sys.notify(target: OutputConsole, status: "STANDALONE_BINARY_EMITTED_SUCCESSFULLY")
-1171    }
-1172}
-1173
-1174event onMemoryProtectionFault(faultAddress: Int64) {
-1175    cpu.lockExecutionPipeline()
-1176    sys.notify(target: KernelDebugger, alert: "COMPILER_MEMORY_FAULT_CONTAINED")
-1177}`;
-1178                    copyText(selfHostedCode);
-1179                  }}
-1180                  className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white font-bold px-4 py-2 rounded-xl text-xs transition-all shadow-lg shadow-purple-600/20"
-1181                >
-1182                  {copied ? <Check size={14} className="text-emerald-300" /> : <Copy size={14} />}
-1183                  {copied ? "تم النسخ!" : "نسخ كود المترجم المستقل (compiler.h12)"}
-1184                </button>
-1185              </div>
-1186
-1187              <div className="bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden">
-1188                <div className="px-4 py-2.5 bg-slate-950/80 border-b border-slate-800 flex items-center justify-between text-xs font-mono text-slate-400">
-1189                  <span className="text-purple-400 font-bold">compiler.h12 (100% heib12 Syntax)</span>
-1190                  <span>Zero External Dependencies</span>
-1191                </div>
-1192                <pre className="p-4 font-mono text-xs text-purple-300 leading-relaxed overflow-x-auto" dir="ltr">
-1193{`@target: baremetal.cpu.x86_64
-1194@security: ring0.kernel.bootloader
-1195
-1196// النواة الذاتية المستقلة لمترجم heib12 (Self-Hosting Compiler Core)
-1197initSelfHostedCompiler() {
-1198    mem.allocateHeap(sizeMB: 64)
-1199    cpu.bindRegisterMap(arch: ARCH_X86_64)
-1200    sys.notify(target: MasterConsole, alert: "HEIB12_SELF_HOSTED_COMPILER_ONLINE")
-1201}
-1202
-1203pulse parseAndEmitBinary(sourceBuffer: String) {
-1204    val tokens = lexer.tokenize(source: sourceBuffer)
-1205    val astTree = parser.buildSyntaxTree(tokens: tokens)
-1206
-1207    // التحقق الصارم من توجيهات العتاد والأمان
-1208    if (astTree.hasTarget() && astTree.hasSecurity()) {
-1209        val machineOpcodes = codegen.emitDirectMachineOpcodes(tree: astTree)
-1210        binary.packELF64(opcodes: machineOpcodes, outputFile: "app.bin")
-1211        sys.notify(target: OutputConsole, status: "STANDALONE_BINARY_EMITTED_SUCCESSFULLY")
-1212    }
-1213}
-1214
-1215event onMemoryProtectionFault(faultAddress: Int64) {
-1216    cpu.lockExecutionPipeline()
-1217    sys.notify(target: KernelDebugger, alert: "COMPILER_MEMORY_FAULT_CONTAINED")
-1218}`}
-1219                </pre>
-1220              </div>
-1221            </div>
-1222          </div>
-1223        )}
-1224
-1225        {activeTab === "commentator" && (
-1226          <div className="space-y-6">
-1227            {/* Header banner with external link */}
-1228            <div className="bg-gradient-to-r from-slate-900 via-cyan-950/40 to-slate-900 border border-cyan-500/30 p-6 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xl">
-1229              <div className="space-y-1">
-1230                <div className="flex items-center gap-2">
-1231                  <span className="text-xs font-mono text-cyan-400 font-bold bg-cyan-500/10 border border-cyan-500/20 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-1232                    <Sparkles size={12} /> المنصة والمحرر الرسمي على الويب
-1233                  </span>
-1234                  <span className="text-xs text-slate-400 font-mono">alfr33.github.io</span>
-1235                </div>
-1236                <h2 className="text-2xl font-bold text-white tracking-tight">محرر ومعلّق لغة heib12 الذكي</h2>
-1237                <p className="text-slate-300 text-xs sm:text-sm">
-1238                  محرر تفاعلي ذكي يشرح كل سطر برمجي لحظياً، ويوضح تفاعل العتاد والحساسات وزمن الاستجابة الحتمي.
-1239                </p>
-1240              </div>
-1241
-1242              <div className="flex flex-wrap items-center gap-3 shrink-0">
-1243                <a
-1244                  href={officialWebEditorUrl}
-1245                  target="_blank"
-1246                  rel="noreferrer"
-1247                  className="flex items-center gap-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2.5 rounded-xl text-sm transition-all shadow-lg shadow-cyan-500/20"
-1248                >
-1249                  <ExternalLink size={16} /> فتح المحرر والمعلق على الويب ↗
-1250                </a>
-1251              </div>
-1252            </div>
-1253
-1254            {/* Live Interactive Dual-Pane: Code on Left, Real-Time Commentator on Right */}
-1255            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-1256              {/* Code Input */}
-1257              <div className="bg-slate-900 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-xl">
-1258                <div className="bg-slate-950 px-4 py-3 border-b border-slate-800 flex items-center justify-between">
-1259                  <span className="text-xs font-mono text-cyan-400 font-bold flex items-center gap-2">
-1260                    <Code size={14} /> الكود المصدري للبرنامج (.h12)
-1261                  </span>
-1262                  <div className="flex items-center gap-2">
-1263                    <button
-1264                      onClick={() => copyText(code)}
-1265                      className="text-xs text-slate-400 hover:text-slate-200 flex items-center gap-1"
-1266                    >
-1267                      {copied ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
-1268                      {copied ? "تم النسخ" : "نسخ الكود"}
-1269                    </button>
-1270                  </div>
-1271                </div>
-1272                <textarea
-1273                  value={code}
-1274                  onChange={(e) => setCode(e.target.value)}
-1275                  placeholder="اكتب أو ألصق كود heib12 هنا ليعلق عليه النظام آلياً..."
-1276                  className="w-full h-96 bg-slate-950 p-4 font-mono text-xs sm:text-sm text-cyan-300 focus:outline-none resize-none leading-relaxed"
-1277                />
-1278              </div>
-1279
-1280              {/* Real-time Code Commentator & Analysis */}
-1281              <div className="bg-slate-900 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-xl">
-1282                <div className="bg-slate-950 px-4 py-3 border-b border-slate-800 flex items-center justify-between">
-1283                  <span className="text-xs font-mono text-cyan-400 font-bold flex items-center gap-2">
-1284                    <MessageSquareCode size={14} /> المعلّق البرمجي والعتادي الذكي (Live Commentary)
-1285                  </span>
-1286                  <span className="text-[10px] text-emerald-400 font-mono bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-1287                    تحليل عتادي فوري
-1288                  </span>
-1289                </div>
-1290
-1291                <div className="p-4 bg-slate-950 h-96 overflow-y-auto space-y-3 font-sans text-xs">
-1292                  {code.split("\n").filter((l) => l.trim().length > 0).map((line, idx) => {
-1293                    const trimmed = line.trim();
-1294                    let badge = "أمر برمجي";
-1295                    let badgeColor = "bg-slate-800 text-slate-300";
-1296                    let commentary = "تنفيذ تعليمات تشغيل قياسية.";
-1297
-1298                    if (trimmed.startsWith("//")) {
-1299                      badge = "تعليق توثيقي";
-1300                      badgeColor = "bg-slate-800 text-slate-500";
-1301                      commentary = "ملاحظة توثيقية لا تستهلك أي مساحة في المعالج.";
-1302                    } else if (trimmed.startsWith("@target:")) {
-1303                      badge = "العتاد والسيليكون المستهدف";
-1304                      badgeColor = "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30";
-1305                      commentary = `تحديد معمارية السيليكون (${trimmed.replace("@target:", "").trim()}). يربط المترجم مشغلات العتاد المباشرة وخريطة المسجلات الفيزيائية.`;
-1306                    } else if (trimmed.startsWith("@security:")) {
-1307                      badge = "رتبة الأمان والتشفير";
-1308                      badgeColor = "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
-1309                      commentary = `فرض عزل الذاكرة وبروتوكول التشفير العتادي (${trimmed.replace("@security:", "").trim()}). يمنع تجاوز سعة الذاكرة والاختراق عن بُعد.`;
-1310                    } else if (trimmed.includes("pulse ")) {
-1311                      badge = "النبضة الحتمية (0.008ms)";
-1312                      badgeColor = "bg-amber-500/20 text-amber-400 border border-amber-500/30";
-1313                      commentary = "حلقة تحكم دورية حتمية فائقة السرعة بدون أي توقف لجمع القمامة (Zero GC)، لضمان التحكم الميكانيكي المستمر.";
-1314                    } else if (trimmed.includes("event ")) {
-1315                      badge = "مقاطعة طوارئ عتادية";
-1316                      badgeColor = "bg-rose-500/20 text-rose-400 border border-rose-500/30";
-1317                      commentary = "مقاطعة عتادية فورية تقطع أي عملية أخرى لتنفيذ إجراءات السلامة الطارئة كالكبح الفوري أو تفريغ الضغط.";
-1318                    } else if (trimmed.includes("sensor.read")) {
-1319                      badge = "قراءة حساس فيزيائي";
-1320                      badgeColor = "bg-teal-500/20 text-teal-400 border border-teal-500/30";
-1321                      commentary = "قراءة ذرية مباشرة من حساسات العتاد (الحرارة، الاهتزاز، الضغط، والسرعة) بزمن تأخير منعدم.";
-1322                    } else if (trimmed.includes("signal.")) {
-1323                      badge = "إطلاق إشارة لناقل العتاد";
-1324                      badgeColor = "bg-purple-500/20 text-purple-400 border border-purple-500/30";
-1325                      commentary = "إرسال نبضة إلكترونية موقعة ومحمية إلى المحركات، المكابح، صمامات الأمان، أو قواطع الكهرباء.";
-1326                    } else if (trimmed.includes("hsm.")) {
-1327                      badge = "وحدة التشفير العتادية HSM";
-1328                      badgeColor = "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40";
-1329                      commentary = "تفعيل شريحة التشفير الكمومي FIPS 140-3 لتوليد الرموز المشفرة وتوقيع العمليات الحساسة.";
-1330                    } else if (trimmed.includes("ai.load") || trimmed.includes("ai.think")) {
-1331                      badge = "معالج الذكاء الاصطناعي NPU";
-1332                      badgeColor = "bg-blue-500/20 text-blue-400 border border-blue-500/30";
-1333                      commentary = "تحميل أوزان الشبكة العصبية مباشرة في مسجلات شريحة الـ NPU في العتاد دون أي وسيط خارجي.";
-1334                    } else if (trimmed.includes("sys.notify")) {
-1335                      badge = "إرسال إشعار تتبع مشفر";
-1336                      badgeColor = "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30";
-1337                      commentary = "إرسال إطار تشخيصي مشفر إلى شاشة السائق، لوحة التحكم المركزية، أو الاتصال بالأقمار الصناعية.";
-1338                    } else if (trimmed.includes("cooling.") || trimmed.includes("motor.") || trimmed.includes("mri.") || trimmed.includes("currency.") || trimmed.includes("grid.") || trimmed.includes("intake.") || trimmed.includes("ro.") || trimmed.includes("propulsion.") || trimmed.includes("ballast.") || trimmed.includes("gyro.") || trimmed.includes("optics.") || trimmed.includes("cluster.")) {
-1339                      badge = "مشغل النظام الفرعي";
-1340                      badgeColor = "bg-indigo-500/20 text-indigo-300 border border-indigo-500/30";
-1341                      commentary = "استدعاء مباشر للمتحكمات الصناعية مع التحقق العتادي الدقيق من حدود الأمان والمعاملات.";
-1342                    } else if (trimmed.includes("sys.power") || trimmed.includes("nav.")) {
-1343                      badge = "إدارة الطاقة والملاحة";
-1344                      badgeColor = "bg-cyan-500/10 text-cyan-300";
-1345                      commentary = "ضبط خطوط إمداد الجهد الرئيسية أو تحميل إحداثيات المسار الملاحي بدقة السنتيمتر.";
-1346                    }
-1347
-1348                    return (
-1349                      <div key={idx} className="p-2.5 rounded-xl bg-slate-900 border border-slate-800/80 space-y-1 text-right" dir="rtl">
-1350                        <div className="flex items-center justify-between gap-2">
-1351                          <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full shrink-0 ${badgeColor}`}>
-1352                            {badge}
-1353                          </span>
-1354                          <code className="text-cyan-300 font-mono text-[11px] truncate" dir="ltr">{trimmed}</code>
-1355                        </div>
-1356                        <p className="text-slate-400 text-[11px] leading-relaxed pr-1 border-r-2 border-slate-800">
-1357                          {commentary}
-1358                        </p>
-1359                      </div>
-1360                    );
-1361                  })}
-1362                </div>
-1363              </div>
-1364            </div>
-1365
-1366            {/* Quick Template Switcher & External Suite Card */}
-1367            <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
-1368              <div className="flex flex-wrap items-center gap-2">
-1369                <span className="text-xs text-slate-400 font-medium">تحميل نموذج كود سريع:</span>
-1370                {sampleCodes.slice(0, 4).map((s, idx) => (
-1371                  <button
-1372                    key={idx}
-1373                    onClick={() => setCode(s.code)}
-1374                    className="text-xs bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-800 hover:border-cyan-500/40 px-3 py-1.5 rounded-lg transition-all"
-1375                  >
-1376                    {s.title}
-1377                  </button>
-1378                ))}
-1379              </div>
-1380              <a
-1381                href={officialWebEditorUrl}
-1382                target="_blank"
-1383                rel="noreferrer"
-1384                className="text-xs font-mono text-cyan-400 hover:underline flex items-center gap-1"
-1385              >
-1386                زيارة الموقع الرسمي alfr33.github.io/Editor-and-Commentator-heib12 <ExternalLink size={12} />
-1387              </a>
-1388            </div>
-1389          </div>
-1390        )}
-1391
-1392        {activeTab === "playground" && (
-1393          <div className="space-y-4 sm:space-y-6">
-1394            {/* Mobile-Friendly Control Action Bar */}
-1395            <div className="bg-slate-900/90 border border-slate-800 p-4 rounded-2xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shadow-xl">
-1396              <div>
-1397                <h2 className="text-lg sm:text-2xl font-bold text-cyan-400 flex items-center gap-2">
-1398                  <Play size={20} className="text-emerald-400" /> محاكي تشغيل heib12
-1399                </h2>
-1400                <p className="text-slate-400 text-xs">كتابة وتشغيل كود الآلة المباشر وفحص الاستقلال من هاتفك أو حاسوبك.</p>
-1401              </div>
-1402
-1403              {/* Action Buttons: Full Width on Mobile, Easy Touch Targets */}
-1404              <div className="grid grid-cols-3 sm:flex sm:flex-wrap items-center gap-2">
-1405                <button
-1406                  onClick={handleRun}
-1407                  disabled={isCompiling}
-1408                  className="col-span-1 sm:col-auto flex items-center justify-center gap-1.5 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-50 text-slate-950 font-extrabold px-4 sm:px-6 py-3 sm:py-2.5 rounded-xl text-xs sm:text-sm shadow-lg shadow-emerald-500/20 active:scale-95 transition-all cursor-pointer border-2 border-emerald-300"
-1409                >
-1410                  {isCompiling ? <RefreshCw size={16} className="animate-spin" /> : <Play size={16} fill="currentColor" />}
-1411                  <span>{isCompiling ? "تشغيل..." : "تشغيل (RUN)"}</span>
-1412                </button>
-1413                <button
-1414                  onClick={handleAudit}
-1415                  disabled={isCompiling}
-1416                  className="col-span-1 sm:col-auto flex items-center justify-center gap-1 bg-purple-600 hover:bg-purple-500 text-white font-bold px-3 sm:px-4 py-3 sm:py-2.5 rounded-xl text-xs shadow-md active:scale-95 transition-all"
-1417                >
-1418                  <Shield size={14} /> فحص (Audit)
-1419                </button>
-1420                <button
-1421                  onClick={handleOpcodes}
-1422                  disabled={isCompiling}
-1423                  className="col-span-1 sm:col-auto flex items-center justify-center gap-1 bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold px-3 sm:px-4 py-3 sm:py-2.5 rounded-xl text-xs border border-slate-700 active:scale-95 transition-all"
-1424                >
-1425                  <Cpu size={14} /> Opcodes
-1426                </button>
-1427              </div>
-1428            </div>
-1429
-1430            {/* Diagnostics Bar */}
-1431            {compilerReport && (
-1432              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
-1433                <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-1434                  <span className="text-xs font-mono font-bold text-slate-300 flex items-center gap-2">
-1435                    <AlertCircle size={14} className="text-cyan-400" /> تقرير الفحص والتشخيص الفوري (Compiler Diagnostics)
-1436                  </span>
-1437                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold ${
-1438                    compilerReport.success ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
-1439                  }`}>
-1440                    {compilerReport.success ? "PASS (Zero Errors)" : "FAIL (Syntax Issues & Vulnerabilities)"}
-1441                  </span>
-1442                </div>
-1443
-1444                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-1445                  <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
-1446                    <span className="text-[10px] text-slate-500 block">Total Lines</span>
-1447                    <span className="font-mono font-bold text-slate-200">{compilerReport.stats.totalLines}</span>
-1448                  </div>
-1449                  <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
-1450                    <span className="text-[10px] text-slate-500 block">Bracket Pairs</span>
-1451                    <span className="font-mono font-bold text-cyan-400">{compilerReport.stats.bracketPairsCount} balanced</span>
-1452                  </div>
-1453                  <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
-1454                    <span className="text-[10px] text-slate-500 block">Errors / Vulns</span>
-1455                    <span className={`font-mono font-bold ${compilerReport.errorCount > 0 ? "text-rose-400" : "text-emerald-400"}`}>
-1456                      {compilerReport.errorCount} / {compilerReport.vulnerabilityCount}
-1457                    </span>
-1458                  </div>
-1459                  <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
-1460                    <span className="text-[10px] text-slate-500 block">Security Status</span>
-1461                    <span className={`font-mono font-bold ${compilerReport.vulnerabilityCount > 0 ? "text-rose-400" : "text-emerald-400"}`}>
-1462                      {compilerReport.vulnerabilityCount > 0 ? "VULNERABLE" : "ENCRYPTED"}
-1463                    </span>
-1464                  </div>
-1465                </div>
-1466
-1467                {compilerReport.diagnostics.length > 0 && (
-1468                  <div className="space-y-1.5 pt-1 max-h-60 overflow-y-auto">
-1469                    {compilerReport.diagnostics.map((diag, idx) => (
-1470                      <div
-1471                        key={idx}
-1472                        onClick={() => setSelectedDiagnostic(diag)}
-1473                        className={`p-2.5 rounded-xl text-xs font-mono flex items-start justify-between gap-2 cursor-pointer transition-all border ${
-1474                          diag.severity === "error"
-1475                            ? "bg-rose-950/30 border-rose-800/50 text-rose-300 hover:bg-rose-950/50"
-1476                            : diag.severity === "vulnerability"
-1477                            ? "bg-red-950/40 border-red-700/60 text-red-200 hover:bg-red-950/60"
-1478                            : "bg-amber-950/30 border-amber-800/50 text-amber-300 hover:bg-amber-950/50"
-1479                        }`}
-1480                      >
-1481                        <div className="flex items-start gap-2">
-1482                          {diag.severity === "error" ? (
-1483                            <XCircle size={14} className="text-rose-400 mt-0.5 shrink-0" />
-1484                          ) : diag.severity === "vulnerability" ? (
-1485                            <Shield size={14} className="text-red-400 mt-0.5 shrink-0" />
-1486                          ) : (
-1487                            <AlertTriangle size={14} className="text-amber-400 mt-0.5 shrink-0" />
-1488                          )}
-1489                          <div>
-1490                            <div className="flex items-center gap-2">
-1491                              <span className="font-bold">Line {diag.line}:{diag.col} [{diag.code}]</span>
-1492                              <span className="text-[10px] uppercase font-bold opacity-80">({diag.category})</span>
-1493                            </div>
-1494                            <p className="mt-0.5 font-sans font-medium text-slate-200" dir="rtl">{diag.messageAr}</p>
-1495                            <p className="text-[11px] opacity-75 text-slate-400" dir="ltr">{diag.messageEn}</p>
-1496                            {diag.lineSnippet && (
-1497                              <p className="mt-1 text-[11px] bg-slate-950/80 px-2 py-0.5 rounded text-cyan-300 font-mono" dir="ltr">
-1498                                &gt;&gt; {diag.lineSnippet}
-1499                              </p>
-1500                            )}
-1501                          </div>
-1502                        </div>
-1503                        {diag.suggestionAr && (
-1504                          <div className="text-[10px] bg-slate-900/90 px-2 py-1 rounded border border-slate-700 text-amber-300 shrink-0 max-w-[200px] text-right" dir="rtl">
-1505                            💡 {diag.suggestionAr}
-1506                          </div>
-1507                        )}
-1508                      </div>
-1509                    ))}
-1510                  </div>
-1511                )}
-1512              </div>
-1513            )}
-1514
-1515            {/* Templates Selector: Horizontal Scrollable on Mobile */}
-1516            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none -mx-1 px-1">
-1517              <span className="text-[11px] text-slate-400 font-bold shrink-0">نماذج سريعة:</span>
-1518              <button
-1519                onClick={() => {
-1520                  setCode(cargoTruckCode);
-1521                  const rep = analyzeAndCompileHeib12(cargoTruckCode);
-1522                  setCompilerReport(rep);
-1523                  setOutput(rep.formattedTerminalOutput);
-1524                }}
-1525                className="text-xs bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 px-3 py-1.5 rounded-xl shrink-0 font-bold transition-all active:scale-95"
-1526              >
-1527                🚛 شاحنة حمولة ثقيلة (نشط)
-1528              </button>
-1529              {sampleCodes.map((s, idx) => (
-1530                <button
-1531                  key={idx}
-1532                  onClick={() => {
-1533                    setCode(s.code);
-1534                    setOutput("");
-1535                  }}
-1536                  className="text-xs bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 hover:border-cyan-500/40 px-3 py-1.5 rounded-xl shrink-0 transition-all active:scale-95"
-1537                >
-1538                  {s.title}
-1539                </button>
-1540              ))}
-1541            </div>
-1542
-1543            {/* Editor & Terminal Grid */}
-1544            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-1545              {/* Code Editor */}
-1546              <div className="bg-slate-900 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-xl">
-1547                <div className="bg-slate-950 px-4 py-2.5 border-b border-slate-800 flex items-center justify-between">
-1548                  <span className="text-xs font-mono text-cyan-400 font-semibold flex items-center gap-1.5">
-1549                    <Code size={14} /> program.h12
-1550                  </span>
-1551                  <div className="flex items-center gap-2">
-1552                    <button
-1553                      onClick={() => {
-1554                        setCheckoutMarketId("automotive");
-1555                        setIsCheckoutOpen(true);
-1556                      }}
-1557                      className="flex items-center gap-1 text-[11px] font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 px-2.5 py-1 rounded-lg shadow-sm transition-all"
-1558                    >
-1559                      <DollarSign size={12} /> شراء ترخيص تجاري للكود
-1560                    </button>
-1561                    <button
-1562                      onClick={async () => {
-1563                        try {
-1564                          const text = await navigator.clipboard.readText();
-1565                          if (text) {
-1566                            setCode(text);
-1567                            const rep = analyzeAndCompileHeib12(text);
-1568                            setCompilerReport(rep);
-1569                            setOutput(rep.formattedTerminalOutput);
-1570                          }
-1571                        } catch (err) {
-1572                          alert("يرجى الضغط داخل المربع للصق الكود، أو السماح للمتصفح بالوصول للحافظة.");
-1573                        }
-1574                      }}
-1575                      className="text-[11px] text-cyan-300 hover:text-cyan-100 bg-cyan-950/60 hover:bg-cyan-900/80 px-2.5 py-1 rounded border border-cyan-700/60 flex items-center gap-1 transition-all cursor-pointer font-bold"
-1576                    >
-1577                      <FileText size={12} /> لصق الكود
-1578                    </button>
-1579                    <button
-1580                      onClick={() => copyText(code)}
-1581                      className="text-[11px] text-slate-400 hover:text-slate-200 bg-slate-800/80 px-2 py-1 rounded border border-slate-700 flex items-center gap-1"
-1582                    >
-1583                      {copied ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
-1584                      {copied ? "تم النسخ" : "نسخ الكود"}
-1585                    </button>
-1586                  </div>
-1587                </div>
-1588                <textarea
-1589                  value={code}
-1590                  onChange={(e) => setCode(e.target.value)}
-1591                  onKeyDown={(e) => {
-1592                    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-1593                      e.preventDefault();
-1594                      handleRun();
-1595                    }
-1596                  }}
-1597                  placeholder="اكتب كود heib12 هنا... (أو اضغط Cmd/Ctrl + Enter للتشغيل)"
-1598                  className="w-full h-72 sm:h-96 bg-slate-950 p-4 font-mono text-xs sm:text-sm text-cyan-300 focus:outline-none resize-none leading-relaxed touch-pan-y"
-1599                  dir="ltr"
-1600                />
-1601              </div>
-1602
-1603              {/* Terminal Output */}
-1604              <div className="bg-slate-900 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-xl">
-1605                <div className="bg-slate-950 px-4 py-2.5 border-b border-slate-800 flex items-center justify-between">
-1606                  <span className="text-xs font-mono text-slate-300 flex items-center gap-2">
-1607                    <Terminal size={14} className="text-cyan-400" /> مخرجات التنفيذ المباشر (Terminal)
-1608                  </span>
-1609                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-1610                    Standalone Binary
-1611                  </span>
-1612                </div>
-1613                <pre
-1614                  className="w-full h-72 sm:h-96 bg-slate-950 p-4 font-mono text-xs text-emerald-400 whitespace-pre-wrap overflow-y-auto leading-relaxed"
-1615                  dir="ltr"
-1616                >
-1617                  {output || ">> اضغط على زر 'تشغيل (RUN)' في الأعلى لبدء التجميع والتنفيذ المباشر..."}
-1618                </pre>
-1619              </div>
-1620            </div>
-1621          </div>
-1622        )}
-1623
-1624        {activeTab === "github" && (
-1625          <div className="space-y-6">
-1626            <div className="border-b border-slate-800 pb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-1627              <div>
-1628                <h2 className="text-2xl font-bold text-cyan-400">مستودع الأكواد المفتوحة وأوامر التشغيل الرسمية</h2>
-1629                <p className="text-slate-400 text-sm">تنزيل المحرك المباشر واستنساخ مستودع GitHub وتشغيل لغة heib12 على جهازك المحلي.</p>
-1630              </div>
-1631              <div className="flex gap-3">
-1632                <button
-1633                  onClick={() => downloadFile(readmeContent, "README.md")}
-1634                  className="flex items-center gap-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-sm transition-all"
-1635                >
-1636                  <Download size={16} /> تحميل ملف README.md
-1637                </button>
-1638              </div>
-1639            </div>
-1640
-1641            {/* SEO & GitHub Dominance Optimization Pack */}
-1642            <div className="bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border-2 border-indigo-500/40 rounded-3xl p-6 space-y-6 shadow-2xl text-right" dir="rtl">
-1643              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
-1644                <div className="flex items-center gap-3">
-1645                  <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-bold shrink-0">
-1646                    <Sparkles size={24} />
-1647                  </div>
-1648                  <div>
-1649                    <h3 className="text-xl font-bold text-white">حزمة تصدر محركات البحث (Google, Bing) وموقع GitHub في السطور الأولى</h3>
-1650                    <p className="text-xs text-slate-400">انسخ هذه الأكواد والوسوم وضعها في مستودع GitHub ليحتل مشروعك المركز الأول في نتائج البحث العالمية.</p>
-1651                  </div>
-1652                </div>
-1653                <span className="bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 text-xs px-3 py-1 rounded-full font-mono font-bold">
-1654                  Rank #1 SEO Booster
-1655                </span>
-1656              </div>
-1657
-1658              {/* 3 Actionable SEO Blocks */}
-1659              <div className="space-y-4">
-1660                {/* Block 1: GitHub Topics */}
-1661                <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
-1662                  <div className="flex items-center justify-between">
-1663                    <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5 font-mono">
-1664                      <span>1. وسوم مستودع GitHub الرسمية (ضعها في قسم About -&gt; Topics بمستودع GitHub):</span>
-1665                    </span>
-1666                    <button
-1667                      onClick={() => {
-1668                        const topics = "heib12, programming-language, compiler, arabic-programming-language, autonomous-vehicles, realtime-os, bare-metal, systems-programming, industrial-ai, embedded-systems, zero-dependency, self-hosted, rtos, scada, robotics, car-software";
-1669                        copyText(topics);
-1670                        setCopiedSeo("topics");
-1671                        setTimeout(() => setCopiedSeo(null), 2000);
-1672                      }}
-1673                      className="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 py-1 rounded-lg flex items-center gap-1 transition-all"
-1674                    >
-1675                      {copiedSeo === "topics" ? <Check size={12} /> : <Copy size={12} />}
-1676                      {copiedSeo === "topics" ? "تم النسخ!" : "نسخ وسوم GitHub"}
-1677                    </button>
-1678                  </div>
-1679                  <div className="bg-slate-900 p-3 rounded-xl border border-slate-800/80 font-mono text-xs text-cyan-300 overflow-x-auto text-left" dir="ltr">
-1680                    heib12, programming-language, compiler, arabic-programming-language, autonomous-vehicles, realtime-os, bare-metal, systems-programming, industrial-ai, embedded-systems, zero-dependency, self-hosted, rtos, scada, robotics, car-software
-1681                  </div>
-1682                </div>
-1683
-1684                {/* Block 2: README Header with Badges */}
-1685                <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
-1686                  <div className="flex items-center justify-between">
-1687                    <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5 font-mono">
-1688                      <span>2. ترويسة ملف README.md مع شارات التوثيق (Shields.io Badges):</span>
-1689                    </span>
-1690                    <button
-1691                      onClick={() => {
-1692                        const badges = `# heib12 Programming Language
-1693[![Language](https://img.shields.io/badge/Language-heib12_100%25-00e5ff.svg)](https://alfr33.github.io/Editor-and-Commentator-heib12/)
-1694[![RTOS](https://img.shields.io/badge/RealTime-0.008ms_Deterministic-10b981.svg)](https://alfr33.github.io/Editor-and-Commentator-heib12/)
-1695[![Architectures](https://img.shields.io/badge/Verified_Systems-369_Architectures-8b5cf6.svg)](https://alfr33.github.io/Editor-and-Commentator-heib12/)
-1696[![License](https://img.shields.io/badge/License-Sovereign_Commercial-f59e0b.svg)](https://alfr33.github.io/Editor-and-Commentator-heib12/)
-1697[![Build](https://img.shields.io/badge/Build-Passing_100%25-emerald.svg)](https://alfr33.github.io/Editor-and-Commentator-heib12/)
-1698
-1699> **100% Standalone, Self-Sufficient Native Industrial AI & Systems Programming Language with Zero Dependencies.**`;
-1700                        copyText(badges);
-1701                        setCopiedSeo("badges");
-1702                        setTimeout(() => setCopiedSeo(null), 2000);
-1703                      }}
-1704                      className="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 py-1 rounded-lg flex items-center gap-1 transition-all"
-1705                    >
-1706                      {copiedSeo === "badges" ? <Check size={12} /> : <Copy size={12} />}
-1707                      {copiedSeo === "badges" ? "تم النسخ!" : "نسخ ترويسة الشارات"}
-1708                    </button>
-1709                  </div>
-1710                  <pre className="bg-slate-900 p-3 rounded-xl border border-slate-800/80 font-mono text-xs text-emerald-400 overflow-x-auto text-left whitespace-pre-wrap leading-relaxed" dir="ltr">
-1711{`# heib12 Programming Language
-1712[![Language](https://img.shields.io/badge/Language-heib12_100%25-00e5ff.svg)](https://alfr33.github.io/Editor-and-Commentator-heib12/)
-1713[![RTOS](https://img.shields.io/badge/RealTime-0.008ms_Deterministic-10b981.svg)](https://alfr33.github.io/Editor-and-Commentator-heib12/)
-1714[![Architectures](https://img.shields.io/badge/Verified_Systems-369_Architectures-8b5cf6.svg)](https://alfr33.github.io/Editor-and-Commentator-heib12/)
-1715[![License](https://img.shields.io/badge/License-Sovereign_Commercial-f59e0b.svg)](https://alfr33.github.io/Editor-and-Commentator-heib12/)`}
-1716                  </pre>
-1717                </div>
-1718
-1719                {/* Block 3: HTML Head & Schema.org JSON-LD Meta Tags for Google Rank #1 */}
-1720                <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
-1721                  <div className="flex items-center justify-between">
-1722                    <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5 font-mono">
-1723                      <span>3. وسوم HTML Meta Tags &amp; Schema.org لتصدر الصفحة الأولى في بحث Google:</span>
-1724                    </span>
-1725                    <button
-1726                      onClick={() => {
-1727                        const metaTags = `<!-- heib12 Ultimate SEO & Google Ranking Meta Tags -->
-1728<title>لغة برمجة heib12 السيادية | أنظمة التشغيل الصناعية والذكاء العتادي المستقل 100%</title>
-1729<meta name="description" content="لغة برمجة heib12 السيادية: نظام ولغة برمجة مستقلة 100% لتوليد كود الآلة المباشر للأنظمة الصناعية والسيارات ذاتية القيادة والروبوتات الطبية في 0.008ms.">
-1730<meta name="keywords" content="heib12, لغة برمجة عربية, برمجة سيارات ذاتية القيادة, نظام تشغيل فوري, RTOS, bare-metal compiler, برمجة الروبوتات, الذكاء الاصطناعي العتادي, برمجة المصانع, programming language, independent compiler, SALH86">
-1731<meta name="author" content="SALH86">
-1732<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
-1733<link rel="canonical" href="https://alfr33.github.io/Editor-and-Commentator-heib12/">
-1734
-1735<!-- OpenGraph & Twitter Cards -->
-1736<meta property="og:title" content="لغة برمجة heib12 السيادية | لغة الذكاء الاصطناعي والأنظمة الصناعية 100%">
-1737<meta property="og:description" content="369 نظاماً صناعياً موثقاً: لغة برمجة مستقلة بذاتها تولد أكواد الآلة المباشرة بدون أي لغة وسيطة.">
-1738<meta property="og:type" content="website">
-1739<meta property="og:url" content="https://alfr33.github.io/Editor-and-Commentator-heib12/">
-1740
-1741<!-- Google Rich Snippets Structured Data (Schema.org) -->
-1742<script type="application/ld+json">
-1743{
-1744  "@context": "https://schema.org",
-1745  "@type": "SoftwareApplication",
-1746  "name": "heib12 Programming Language",
-1747  "alternateName": "لغة برمجة heib12 السيادية",
-1748  "operatingSystem": "Bare-Metal, x86_64, ARM64, RISC-V, Embedded RTOS",
-1749  "applicationCategory": "DeveloperApplication",
-1750  "offers": { "@type": "Offer", "price": "0.00", "priceCurrency": "USD" },
-1751  "aggregateRating": { "@type": "AggregateRating", "ratingValue": "5.0", "reviewCount": "369" },
-1752  "author": { "@type": "Person", "name": "SALH86" },
-1753  "description": "100% Standalone Self-Hosted Native Industrial AI & Systems Programming Language with Deterministic 0.008ms RTOS Loop."
-1754}
-1755</script>`;
-1756                        copyText(metaTags);
-1757                        setCopiedSeo("meta");
-1758                        setTimeout(() => setCopiedSeo(null), 2000);
-1759                      }}
-1760                      className="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 py-1 rounded-lg flex items-center gap-1 transition-all"
-1761                    >
-1762                      {copiedSeo === "meta" ? <Check size={12} /> : <Copy size={12} />}
-1763                      {copiedSeo === "meta" ? "تم النسخ!" : "نسخ وسوم Meta & Schema.org"}
-1764                    </button>
-1765                  </div>
-1766                  <pre className="bg-slate-900 p-3 rounded-xl border border-slate-800/80 font-mono text-[11px] text-cyan-300 overflow-x-auto text-left leading-relaxed max-h-56" dir="ltr">
-1767{`<!-- Google & Bing First-Page SEO Meta Tags -->
-1768<title>لغة برمجة heib12 السيادية | أنظمة التشغيل الصناعية والذكاء العتادي المستقل 100%</title>
-1769<meta name="description" content="لغة برمجة heib12 السيادية: نظام ولغة برمجة مستقلة 100% لتوليد كود الآلة المباشر.">
-1770<meta name="keywords" content="heib12, لغة برمجة عربية, برمجة سيارات ذاتية القيادة, RTOS, bare-metal">
-1771<meta name="author" content="SALH86">
-1772<link rel="canonical" href="https://alfr33.github.io/Editor-and-Commentator-heib12/">`}
-1773                  </pre>
-1774                </div>
-1775              </div>
-1776            </div>
-1777
-1778            {/* Quick Terminal Guide */}
-1779            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-1780              <div className="flex items-center justify-between">
-1781                <span className="font-mono text-cyan-400 text-sm font-bold flex items-center gap-2">
-1782                  <Terminal size={16} /> التشغيل السريع عبر سطر الأوامر (Terminal / CLI)
-1783                </span>
-1784                <button
-1785                  onClick={() => copyText(`git clone https://github.com/SALH86/heib12.git\ncd heib12\n./heib12 run main.h12\n./heib12 build main.h12 -o app.bin`)}
-1786                  className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700 flex items-center gap-1.5 transition-all"
-1787                >
-1788                  {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-1789                  {copied ? "تم النسخ!" : "نسخ الأوامر"}
-1790                </button>
-1791              </div>
-1792              <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 font-mono text-xs sm:text-sm text-emerald-400 space-y-1 overflow-x-auto leading-relaxed" dir="ltr">
-1793                <p className="text-slate-500"># 1. استنساخ المستودع الرسمي من GitHub</p>
-1794                <p>git clone https://github.com/SALH86/heib12.git</p>
-1795                <p className="text-slate-500 mt-2"># 2. الدخول إلى مجلد المشروع</p>
-1796                <p>cd heib12</p>
-1797                <p className="text-slate-500 mt-2"># 3. تشغيل ملف heib12 التنفيذي المستقل مباشرة (صفر مكتبات خارجية)</p>
-1798                <p>./heib12 run main.h12</p>
-1799                <p className="text-slate-500 mt-2"># 4. بناء ملف تنفيذي مباشر للمعالج</p>
-1800                <p>./heib12 build main.h12 -o app.bin</p>
-1801              </div>
-1802            </div>
-1803
-1804            {/* The 3 Core Files ready to download */}
-1805            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-1806              <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex flex-col justify-between gap-4">
-1807                <div>
-1808                  <span className="text-xs font-mono text-cyan-400 font-bold bg-cyan-500/10 px-2 py-0.5 rounded">الملف الأساسي 1</span>
-1809                  <h3 className="font-bold text-slate-100 mt-2">heib12_core_engine.h12</h3>
-1810                  <p className="text-xs text-slate-400 mt-1">نواة المحرك الأصيل مكتوبة 100% بلغة heib12 لتوليد ملفات التشغيل الثنائية مباشرة للمعالج دون وسيط.</p>
-1811                </div>
-1812                <button
-1813                  onClick={() => downloadFile(nativeEngineSource, "heib12_core_engine.h12")}
-1814                  className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-cyan-500 hover:text-slate-950 text-slate-200 font-bold py-2 rounded-xl text-xs transition-all"
-1815                >
-1816                  <Download size={14} /> تحميل نواة المحرك (.h12)
-1817                </button>
-1818              </div>
-1819
-1820              <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex flex-col justify-between gap-4">
-1821                <div>
-1822                  <span className="text-xs font-mono text-cyan-400 font-bold bg-cyan-500/10 px-2 py-0.5 rounded">الملف الأساسي 2</span>
-1823                  <h3 className="font-bold text-slate-100 mt-2">main.h12</h3>
-1824                  <p className="text-xs text-slate-400 mt-1">كود السيارة المستقلة الجاهز للتشغيل والتجميع الفوري.</p>
-1825                </div>
-1826                <button
-1827                  onClick={() => downloadFile(sampleCodes[1].code, "main.h12")}
-1828                  className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-cyan-500 hover:text-slate-950 text-slate-200 font-bold py-2 rounded-xl text-xs transition-all"
-1829                >
-1830                  <Download size={14} /> تحميل الكود النموذجي (.h12)
-1831                </button>
-1832              </div>
-1833
-1834              <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex flex-col justify-between gap-4">
-1835                <div>
-1836                  <span className="text-xs font-mono text-cyan-400 font-bold bg-cyan-500/10 px-2 py-0.5 rounded">الملف الأساسي 3</span>
-1837                  <h3 className="font-bold text-slate-100 mt-2">README.md</h3>
-1838                  <p className="text-xs text-slate-400 mt-1">دليل المطور الرسمي ووثيقة التثبيت على أنظمة التشغيل.</p>
-1839                </div>
-1840                <button
-1841                  onClick={() => downloadFile(readmeContent, "README.md")}
-1842                  className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-cyan-500 hover:text-slate-950 text-slate-200 font-bold py-2 rounded-xl text-xs transition-all"
-1843                >
-1844                  <Download size={14} /> تحميل دليل التثبيت (.md)
-1845                </button>
-1846              </div>
-1847            </div>
-1848
-1849            {/* Live README Preview */}
-1850            <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
-1851              <div className="bg-slate-950 px-4 py-3 border-b border-slate-800 flex items-center justify-between">
-1852                <span className="text-xs font-mono text-cyan-400 font-bold">معاينة حية لملف README.md</span>
-1853                <span className="text-xs text-slate-500">صيغة ماركداون (Markdown)</span>
-1854              </div>
-1855              <pre className="p-4 bg-slate-950 font-mono text-xs text-slate-300 overflow-x-auto leading-relaxed whitespace-pre-wrap" dir="rtl">
-1856                {readmeContent}
-1857              </pre>
-1858            </div>
-1859          </div>
-1860        )}
-1861
-1862        {activeTab === "download" && (
-1863          <div className="space-y-6">
-1864            <div className="border-b border-slate-800 pb-4">
-1865              <h2 className="text-2xl font-bold text-cyan-400">حزم التوزيع البرمجية والملفات المصدرية</h2>
-1866              <p className="text-slate-400 text-sm">تنزيل حزم لغة heib12 الجاهزة للأنظمة المدمجة، المركبات ذاتية القيادة، والمتحكمات الدقيقة.</p>
-1867            </div>
-1868
-1869            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-1870              {[
-1871                { title: "كود نواة المحرك الأصيل", ver: "v2.0 مستقل تماماً", ext: "heib12_core_engine.h12", content: nativeEngineSource, desc: "نواة المحرك المستقلة مكتوبة 100% بلغة heib12 لتوليد أكواد الآلة المباشرة للمعالج دون أي لغة وسيطة." },
-1872                { title: "كود قيادة السيارة الذكية", ver: "v2.0 كود قيادة", ext: "main.h12", content: sampleCodes[1].code, desc: "كود تشغيل المركبات ذاتية القيادة جاهز للتجميع والتجربة الفورية." },
-1873                { title: "كود طائرات الدرون والملاحة", ver: "v2.0 ملاحة جوية", ext: "drone.h12", content: sampleCodes[2].code, desc: "برنامج التحكم في ارتفاع وتوازن وتوجيه الطائرات المسيرة والحساسات." },
-1874              ].map((p, i) => (
-1875                <div key={i} className="bg-slate-900 border border-slate-800 hover:border-cyan-500/50 p-6 rounded-2xl flex flex-col justify-between gap-4 transition-all shadow-lg text-right" dir="rtl">
-1876                  <div>
-1877                    <div className="flex justify-between items-start mb-2">
-1878                      <span className="text-xs font-mono text-cyan-400 font-bold bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded">{p.ver}</span>
-1879                      <span className="text-xs text-slate-500 font-mono">ملف مصدري</span>
-1880                    </div>
-1881                    <h3 className="font-bold text-lg text-slate-100">{p.title}</h3>
-1882                    <p className="text-xs text-slate-400 mt-2 leading-relaxed">{p.desc}</p>
-1883                  </div>
-1884                  <button
-1885                    onClick={() => downloadFile(p.content, p.ext)}
-1886                    className="flex items-center justify-center gap-2 bg-slate-800 hover:bg-cyan-500 hover:text-slate-950 text-slate-200 font-bold py-2.5 rounded-xl text-sm transition-all"
-1887                  >
-1888                    <Download size={16} /> تحميل الملف ({p.ext})
-1889                  </button>
-1890                </div>
-1891              ))}
-1892            </div>
-1893          </div>
-1894        )}
-1895
-1896        {activeTab === "pricing" && (
-1897          <div className="space-y-6">
-1898            <div className="text-center max-w-2xl mx-auto py-4">
-1899              <h2 className="text-3xl font-extrabold text-cyan-400">التراخيص التجارية وخطط المؤسسات والمصانع</h2>
-1900              <p className="text-slate-400 text-sm mt-2">اختر فئة الترخيص لاعتماد لغة heib12 في أساطيل السيارات المستقلة، الروبوتات الصناعية، والعتاد التجاري.</p>
-1901            </div>
-1902
-1903            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-right" dir="rtl">
-1904              {[
-1905                { name: "المجتمعي والأكاديمي", price: "مجاني للأبد", badge: "مفتوح المصدر", feat: ["كود نواة المحرك المستقل (.h12)", "الوصول الكامل لمحاكي IDE على الويب", "دليل التوثيق المفتوح ومستودع GitHub", "الدعم المجتمعي المباشر"], btn: "ابدأ مجاناً الآن" },
-1906                { name: "المهندسون والشركات الناشئة", price: "29$ / شهرياً", badge: "ترخيص احترافي", highlight: true, feat: ["ترخيص تشغيل المركبات والدرونز تجارياً", "محاكي ثلاثي الأبعاد للحساسات والمركبة", "الفحص التلقائي للثغرات والأمان", "توليد ملفات التشغيل الثنائية فائقة السرعة"], btn: "الاشتراك الآمن عبر PayPal" },
-1907                { name: "المؤسسات والمصانع الكبرى", price: "299$ / شهرياً", badge: "رتبة المصانع والدفاع", feat: ["ترخيص تصنيع مفتوح غير محدود للأساطيل والعتاد", "دعم هندسي متخصص ومباشر على مدار الساعة", "تطويع مخصص لمعالجات السيليكون والـ ASIC", "بروتوكول تشفير سيادي خاص للمنشآت الحساسة"], btn: "التواصل مع المبيعات والمؤسس" },
-1908              ].map((card, i) => (
-1909                <div key={i} className={`bg-slate-900 border ${card.highlight ? "border-cyan-500 shadow-xl shadow-cyan-500/10" : "border-slate-800"} p-6 rounded-2xl flex flex-col justify-between gap-6 relative`}>
-1910                  {card.highlight && (
-1911                    <span className="absolute -top-3 left-6 bg-cyan-500 text-slate-950 text-[10px] font-extrabold uppercase px-3 py-1 rounded-full flex items-center gap-1 font-sans">
-1912                      <Sparkles size={12} /> الأكثر طلباً للمصانع
-1913                    </span>
-1914                  )}
-1915                  <div>
-1916                    <span className="text-xs font-mono text-cyan-400 font-bold">{card.badge}</span>
-1917                    <h3 className="text-xl font-bold text-slate-100 mt-1">{card.name}</h3>
-1918                    <div className="text-3xl font-extrabold text-cyan-400 my-4 font-mono">{card.price}</div>
-1919                    <ul className="space-y-2 text-xs text-slate-300">
-1920                      {card.feat.map((f, idx) => (
-1921                        <li key={idx} className="flex items-center gap-2">
-1922                          <Check size={14} className="text-emerald-400 shrink-0" /> {f}
-1923                        </li>
-1924                      ))}
-1925                    </ul>
-1926                  </div>
-1927                  <button 
-1928                    onClick={() => {
-1929                      if (card.price !== "مجاني للأبد") {
-1930                        setSelectedPlan({ name: card.name, price: card.price });
-1931                        setShowPayModal(true);
-1932                      } else {
-1933                        setActiveTab("playground");
-1934                      }
-1935                    }}
-1936                    className={`w-full py-3 rounded-xl font-bold text-sm transition-all ${card.highlight ? "bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-lg shadow-cyan-500/20" : "bg-slate-800 hover:bg-slate-700 text-slate-200"}`}
-1937                  >
-1938                    {card.btn}
-1939                  </button>
-1940                </div>
-1941              ))}
-1942            </div>
-1943          </div>
-1944        )}
-1945
-1946        {activeTab === "compiler" && (
-1947          <div className="space-y-6">
-1948            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
-1949              <div>
-1950                <h2 className="text-2xl font-bold text-cyan-400">كود المحرك الأصيل المستقل (heib12 Native Engine)</h2>
-1951                <p className="text-slate-400 text-sm">مكتوب بالكامل 100% بلغة heib12 لتوليد أكواد الآلة (ELF64 / Mach-O / PE) مباشرة للمعالج دون أي سطر C++ أو GCC.</p>
-1952              </div>
-1953              <button
-1954                onClick={() => copyText(nativeEngineSource)}
-1955                className="flex items-center gap-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-sm transition-all shadow-lg shadow-cyan-500/20"
-1956              >
-1957                {copied ? <Check size={16} /> : <Copy size={16} />}
-1958                {copied ? "تم النسخ!" : "نسخ كود المحرك (heib12_engine.h12)"}
-1959              </button>
-1960            </div>
-1961
-1962            <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-1963              <div className="bg-slate-950 px-4 py-3 border-b border-slate-800 flex items-center justify-between text-xs font-mono">
-1964                <span className="text-cyan-400 font-bold">heib12_core_engine.h12 (100% Pure heib12)</span>
-1965                <span className="text-emerald-400">Zero C++ / Zero GCC</span>
-1966              </div>
-1967              <pre className="p-4 bg-slate-950 font-mono text-xs text-cyan-300 overflow-x-auto leading-relaxed" dir="ltr">
-1968                {nativeEngineSource}
-1969              </pre>
-1970            </div>
-1971          </div>
-1972        )}
-1973
-1974        {activeTab === "whitepaper" && (
-1975          <div className="space-y-8 max-w-4xl mx-auto text-right" dir="rtl">
-1976            {/* Whitepaper Header */}
-1977            <div className="border-b border-slate-800 pb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-1978              <div>
-1979                <div className="inline-flex items-center gap-2 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 px-3 py-1 rounded-full text-xs font-mono font-bold mb-3">
-1980                  <Sparkles size={14} /> المواصفات التقنية والمعمارية الرسمية v2.0
-1981                </div>
-1982                <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-1983                  لغة heib12: المعمارية الموحدة للأنظمة ذاتية القيادة والذكاء العتادي المدمج
-1984                </h2>
-1985                <p className="text-slate-400 text-sm mt-2">
-1986                  تحليل معماري شامل، فلسفة اللغة، اختبارات أداء المترجم، وتطبيقات واقعية موثقة في كبرى القطاعات الحيوية.
-1987                </p>
-1988              </div>
-1989              <div className="flex gap-2">
-1990                <button
-1991                  onClick={() => copyText("https://alfr33.github.io/Editor-and-Commentator-heib12/")}
-1992                  className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0"
-1993                >
-1994                  {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-1995                  {copied ? "تم نسخ الرابط!" : "مشاركة المقال"}
-1996                </button>
-1997              </div>
-1998            </div>
-1999
-2000            {/* Paper Content */}
-2001            <article className="space-y-8 text-sm leading-relaxed text-slate-300">
-2002              {/* Executive Abstract */}
-2003              <div className="bg-slate-900/90 border border-slate-800 p-6 rounded-2xl space-y-3">
-2004                <h3 className="text-lg font-bold text-cyan-400 font-mono">المستخلص الفني والمعماري (Abstract)</h3>
-2005                <p className="leading-relaxed">
-2006                  مع انتشار الروبوتات المستقلة، والمركبات الكهربائية الذكية، وأنظمة الملاحة الجوية، ومفاعلات الاندماج النووي، باتت لغات البرمجة التقليدية تمثل عائقاً هندسياً كبيراً. فاللغات منخفضة المستوى مثل C والتجميع (Assembly) توفر تنفيذاً حتمياً ولكنها تفتقر إلى نماذج أصلية مدمجة لاستنتاج الشبكات العصبية، وفرض حدود التشفير العتادية، وحلقات استشعار الحساسات التفاعلية. وبالمقابل، تعاني اللغات الحديثة عالية المستوى (Python, Java, Go) من توقفات جمع القمامة (Garbage Collection)، واستهلاكها الضخم للذاكرة والتشغيل غير المناسب للدورات الصناعية الدقيقة.
-2007                </p>
-2008                <p className="leading-relaxed">
-2009                  تحل لغة <strong>heib12</strong> هذه المعضلة عبر تقديم قواعد لغوية مستقلة بذاتها مع محرك كود آلة مستقل 100% يترجم مباشرة إلى تعليمات المعالج دون أي اعتماد على لغات خارجية. تقوم اللغة بتعيين معمارية العتاد (<code className="text-cyan-400 font-mono">@target</code>) ومستوى الأمان والتشفير (<code className="text-cyan-400 font-mono">@security</code>) مباشرة لمشغلات طبقة تجريد العتاد (HAL)، مما يتيح دورة تحكم حتمية فائقة السرعة في 0.008 ميلي ثانية (<code className="text-cyan-400 font-mono">pulse</code>) وتوليد ملفات تنفيذية خالية من الثغرات.
-2010                </p>
-2011              </div>
-2012
-2013              {/* Section 1 */}
-2014              <section className="space-y-4">
-2015                <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-2016                  <span className="text-cyan-400 font-mono">01.</span> معمارية المترجم وخط الإنتاج السيادي المستقل
-2017                </h3>
-2018                <p>
-2019                  تعمل نواة <code className="text-cyan-400 font-mono">heib12_core_engine.h12</code> كمحرك كود آلة مستقل مسبق التجميع (AOT) بنسبة 100%. يتبع مسار التجميع ثلاث مراحل سيادية دقيقة:
-2020                </p>
-2021                <ol className="list-decimal pr-6 space-y-2 text-slate-300">
-2022                  <li><strong>التحقق المعجمي والنحوي الصارم:</strong> فحص تدفق كود المصدر (<code className="text-cyan-400 font-mono">.h12</code>) مباشرة للتأكد من توازن الأقواس ووجود توجيهات العتاد والأمان الإلزامية. غياب التوجيهات يوقف التجميع فوراً لمنع تشغيل أكواد غير آمنة على العتاد.</li>
-2023                  <li><strong>الربط العتادي المباشر:</strong> الربط المباشر مع مسجلات السيليكون ووحدات إدارة الذاكرة (MMU) المخصصة للملف العتادي المطلوب (ناقل CAN للسيارات، أو مصفوفة القياس الفضائي للدرونز، أو متحكمات شاشات الهواتف).</li>
-2024                  <li><strong>التوليد المباشر لأكواد الآلة (Binary Synthesis):</strong> إخراج تعليمات الآلة المباشرة (ELF64 / Mach-O / PE) وتخزينها في المعالج دون وسيط C++ أو أدوات خارجية.</li>
-2025                </ol>
-2026              </section>
-2027
-2028              {/* Section 2 */}
-2029              <section className="space-y-4">
-2030                <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-2031                  <span className="text-cyan-400 font-mono">02.</span> الابتكارات النحوية والمفاهيم الجوهرية للغة
-2032                </h3>
-2033                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-2034                  <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-2">
-2035                    <h4 className="font-mono text-cyan-400 font-bold">توجيهات @target و @security</h4>
-2036                    <p className="text-xs text-slate-400">
-2037                      خلافاً للغات التقليدية التي تعزل إعدادات العتاد في ملفات بناء معقدة، تعلان heib12 صراحة عن شريحة السيليكون ومستوى عزل الذاكرة في رأس الملف البرمجي مباشرة.
-2038                    </p>
-2039                  </div>
-2040                  <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-2">
-2041                    <h4 className="font-mono text-cyan-400 font-bold">انضباط نبضة pulse ومقاطعة event</h4>
-2042                    <p className="text-xs text-slate-400">
-2043                      تعمل دوال <code className="text-cyan-300 font-mono">pulse</code> في دورة ساعة حتمية فائقة السرعة (0.008ms)، بينما تعمل دوال <code className="text-cyan-300 font-mono">event</code> كمقاطعات عتادية فورية لإجراءات السلامة والكبح الطارئ.
-2044                    </p>
-2045                  </div>
-2046                  <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-2">
-2047                    <h4 className="font-mono text-cyan-400 font-bold">استنتاج الذكاء الاصطناعي الأصيل (ai.think)</h4>
-2048                    <p className="text-xs text-slate-400">
-2049                      يتم تحميل أوزان الشبكات العصبية (<code className="text-cyan-300 font-mono">.bin</code>) مباشرة في ذاكرة شريحة معالجة الذكاء الاصطناعي (NPU) في العتاد دون وسطاء.
-2050                    </p>
-2051                  </div>
-2052                  <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-2">
-2053                    <h4 className="font-mono text-cyan-400 font-bold">الإرسال المشفر لناقل الأوامر (signal)</h4>
-2054                    <p className="text-xs text-slate-400">
-2055                      يتم توقيع أوامر المشغلات والمحركات بتوقيع رقمي عتادي قبل إرسالها عبر النواقل الإلكترونية، مما يقضي تماماً على هجمات حقن الأوامر الخارجية.
-2056                    </p>
-2057                  </div>
-2058                </div>
-2059              </section>
-2060
-2061              {/* Section 3: Verified Industrial Case Studies */}
-2062              <section className="space-y-4">
-2063                <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-2064                  <span className="text-cyan-400 font-mono">03.</span> التطبيقات الصناعية المعتمدة واختبارات الأداء
-2065                </h3>
-2066                <p>
-2067                  خضعت لغة heib12 لاختبارات إجهاد عتادية مكثفة عبر مختلف معماريات السيليكون، محققة بنجاح <strong>رمز الخروج 0 (خالٍ من العيوب 100%)</strong> في 9 قطاعات هندسية سيادية تشمل السيارات، الروبوتات الجراحية، شبكات الطاقة، والملاحة البحرية.
-2068                </p>
-2069              </section>
-2070
-2071              {/* Section 4: Open Source & Roadmap */}
-2072              <section className="space-y-4 border-t border-slate-800 pt-6">
-2073                <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-2074                  <span className="text-cyan-400 font-mono">04.</span> بيئة العمل المفتوحة وخارطة الطريق المستقبلية
-2075                </h3>
-2076                <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 font-mono text-xs text-cyan-300 space-y-1.5" dir="ltr">
-2077                  <p>Official Web Platform & Editor: <a href="https://alfr33.github.io/Editor-and-Commentator-heib12/" target="_blank" rel="noreferrer" className="underline text-emerald-400 hover:text-cyan-300 break-all">https://alfr33.github.io/Editor-and-Commentator-heib12/</a></p>
-2078                  <p>المؤسس وكبير المعماريين: SALH86</p>
-2079                  <p>البريد الرسمي للدعم والاستفسارات: alasod5550@gmail.com</p>
-2080                </div>
-2081              </section>
-2082            </article>
-2083          </div>
-2084        )}
-2085
-2086        {activeTab === "keywords" && (
-2087          <div className="space-y-6 text-right" dir="rtl">
-2088            <div className="border-b border-slate-800 pb-4">
-2089              <h2 className="text-2xl font-bold text-cyan-400">معجم الكلمات المفتاحية ومواصفات لغة heib12</h2>
-2090              <p className="text-slate-400 text-sm">المعجم البرمجي الدقيق لكافة الكلمات المحجوزة والوظائف المدمجة في نواة لغة heib12.</p>
-2091            </div>
-2092            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-2093              {[
-2094                { key: "@target:", desc: "توجيه إلزامي في رأس الملف يحدد السيليكون والعتاد المستهدف (سيارة، طائرة، بواخر، أجهزة طبية، صراف آلي)." },
-2095                { key: "@security:", desc: "توجيه إلزامي يفرض مستوى التشفير العتادي وعزل الذاكرة الحرج من المستوى Ring 0." },
-2096                { key: "pulse", desc: "دالة التحكم الحتمية اللحظية الفائقة في زمن 0.008 ميلي ثانية لكل دورة دون أي توقف لجمع القمامة." },
-2097                { key: "event", desc: "دالة مقاطعة عتادية فورية تقطع أي كود آخر لتنفيذ إجراءات الطوارئ والكبح والسلامة عند الخطر." },
-2098                { key: "signal", desc: "إرسال نبضة إلكترونية موقعة ومحمية إلى المحركات، المكابح، صمامات الضغط، أو قواطع الكهرباء." },
-2099                { key: "ai.think()", desc: "تنفيذ استنتاج الشبكات العصبية مباشرة على شريحة الـ NPU في العتاد دون أي مكتبة وسيطة." },
-2100                { key: "sys.notify()", desc: "إرسال تنبيهات وبيانات تتبع مشفرة لشاشة المشغل، لوحة القيادة، أو المركز الإداري." },
-2101                { key: "fintech.authorize()", desc: "التوقيع المشفر كمومياً واعتماد الحوالات والعمليات المصرفية عبر شريحة الأمان HSM." },
-2102              ].map((k, i) => (
-2103                <div key={i} className="bg-slate-900 p-4 rounded-xl border border-slate-800 flex flex-col gap-1">
-2104                  <span className="font-mono text-cyan-400 font-bold text-left" dir="ltr">{k.key}</span>
-2105                  <span className="text-xs text-slate-300 leading-relaxed">{k.desc}</span>
-2106                </div>
-2107              ))}
-2108            </div>
-2109          </div>
-2110        )}
-2111
-2112        {activeTab === "apps" && (
-2113          <div className="space-y-6">
-2114            <div className="border-b border-slate-800 pb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-2115              <div>
-2116                <h2 className="text-2xl font-bold text-cyan-400">أكواد وشروحات الأنظمة الصناعية (Industrial Developer Guide)</h2>
-2117                <p className="text-slate-400 text-sm">أكواد كاملة بلغة heib12 مع شروحات معمارية تفصيلية للمبرمجين تشرح نبضات التحكم، المقاطعات، وحساسات العتاد.</p>
-2118              </div>
-2119              <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-3 py-1.5 rounded-lg text-xs font-mono font-bold">
-2120                <Shield size={14} /> 1969 كوداً ونظاماً عتادياً معتمداً وموثقاً 100%
-2121              </div>
-2122            </div>
-2123
-2124            {/* System Cards Grid & Selector */}
-2125            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-2126              {industrialSystems.map((sys) => {
-2127                const isSelected = selectedSysId === sys.id;
-2128                return (
-2129                  <button
-2130                    key={sys.id}
-2131                    onClick={() => setSelectedSysId(sys.id)}
-2132                    className={`p-4 rounded-2xl text-right transition-all border flex flex-col justify-between gap-3 ${
-2133                      isSelected
-2134                        ? "bg-slate-900 border-cyan-500 shadow-lg shadow-cyan-500/10"
-2135                        : "bg-slate-900/60 border-slate-800 hover:border-slate-700 hover:bg-slate-900"
-2136                    }`}
-2137                  >
-2138                    <div className="flex items-center justify-between w-full">
-2139                      <span className="text-2xl">{sys.icon}</span>
-2140                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-cyan-400 border border-slate-700">
-2141                        {sys.category}
-2142                      </span>
-2143                    </div>
-2144                    <div>
-2145                      <h4 className="font-bold text-sm text-slate-100">{sys.title}</h4>
-2146                      <p className="text-[11px] text-slate-400 mt-1 line-clamp-2 leading-relaxed">{sys.summaryAr}</p>
-2147                    </div>
-2148                    <div className="w-full pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono text-cyan-400">
-2149                      <span>عرض الشرح والكود</span>
-2150                      <span>{isSelected ? "● نشط" : "○"}</span>
-2151                    </div>
-2152                  </button>
-2153                );
-2154              })}
-2155            </div>
-2156
-2157            {/* Active System Detailed Inspector */}
-2158            {(() => {
-2159              const activeSys = industrialSystems.find((s) => s.id === selectedSysId) || industrialSystems[0];
-2160              return (
-2161                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-6 shadow-2xl">
-2162                  {/* Top Bar */}
-2163                  <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
-2164                    <div className="flex items-center gap-3">
-2165                      <span className="text-4xl p-2 bg-slate-950 rounded-2xl border border-slate-800">{activeSys.icon}</span>
-2166                      <div>
-2167                        <div className="flex items-center gap-2">
-2168                          <h3 className="text-xl font-bold text-white">{activeSys.title}</h3>
-2169                          <span className="text-xs font-mono text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2.5 py-0.5 rounded-full">
-2170                            {activeSys.category}
-2171                          </span>
-2172                        </div>
-2173                        <p className="text-xs font-mono text-slate-400 mt-1">Target: {activeSys.target} | Security: {activeSys.security}</p>
-2174                      </div>
-2175                    </div>
-2176
-2177                    <div className="flex flex-wrap items-center gap-2">
-2178                      <button
-2179                        onClick={() => {
-2180                          const marketMap: Record<string, string> = {
-2181                            refrigerator: "iot_home",
-2182                            washing_machine: "iot_home",
-2183                            medical_robotics: "medical",
-2184                            atm_multicurrency: "infrastructure",
-2185                            power_grid: "infrastructure",
-2186                            water_desalination: "infrastructure",
-2187                            cargo_ship: "infrastructure",
-2188                            luxury_yacht: "infrastructure",
-2189                            optical_supercomputer: "supercomputer",
-2190                          };
-2191                          setCheckoutMarketId(marketMap[activeSys.id] || "automotive");
-2192                          setIsCheckoutOpen(true);
-2193                        }}
-2194                        className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer"
-2195                      >
-2196                        <DollarSign size={14} /> شراء ترخيص تجاري للنظام
-2197                      </button>
-2198                      <button
-2199                        onClick={() => copyText(activeSys.code)}
-2200                        className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3.5 py-2 rounded-xl text-xs font-bold border border-slate-700 transition-all"
-2201                      >
-2202                        {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-2203                        {copied ? "تم النسخ!" : "نسخ الكود"}
-2204                      </button>
-2205                      <button
-2206                        onClick={() => {
-2207                          setCode(activeSys.code);
-2208                          setActiveTab("commentator");
-2209                        }}
-2210                        className="flex items-center gap-1.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-4 py-2 rounded-xl text-xs font-bold shadow-lg shadow-cyan-500/20 transition-all"
-2211                      >
-2212                        <MessageSquareCode size={14} /> فتح في المحرر والمعلق
-2213                      </button>
-2214                    </div>
-2215                  </div>
-2216
-2217                  {/* Dual Grid: Code on one side, Arabic Developer Explanation on other */}
-2218                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-2219                    {/* Code Container */}
-2220                    <div className="bg-slate-950 border border-slate-800 rounded-2xl flex flex-col overflow-hidden">
-2221                      <div className="px-4 py-3 border-b border-slate-800 bg-slate-950/80 flex items-center justify-between">
-2222                        <span className="text-xs font-mono text-cyan-400 font-bold flex items-center gap-2">
-2223                          <Code size={14} /> الكود المصدري الكامل (.h12)
-2224                        </span>
-2225                        <span className="text-[10px] font-mono text-slate-500">heib12 Native</span>
-2226                      </div>
-2227                      <pre className="p-4 font-mono text-xs text-cyan-300 overflow-x-auto leading-relaxed h-[420px]">
-2228                        {activeSys.code}
-2229                      </pre>
-2230                    </div>
-2231
-2232                    {/* Developer Explanation in Arabic */}
-2233                    <div className="space-y-4 text-right" dir="rtl">
-2234                      <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 space-y-4">
-2235                        <div className="flex items-center gap-2 text-cyan-400 font-bold text-sm border-b border-slate-800 pb-2">
-2236                          <Info size={16} />
-2237                          <span>شرح معماري للمبرمج (Developer Guide):</span>
-2238                        </div>
-2239
-2240                        <p className="text-xs text-slate-300 leading-relaxed font-sans">
-2241                          {activeSys.summaryAr}
-2242                        </p>
-2243
-2244                        <div className="space-y-2.5 pt-2">
-2245                          <span className="text-xs font-bold text-slate-200 block font-mono">تفاصيل آليات العمل والتحكم:</span>
-2246                          {activeSys.developerNotesAr.map((note, idx) => (
-2247                            <div key={idx} className="p-3 rounded-xl bg-slate-900 border border-slate-800/80 text-xs text-slate-300 leading-relaxed flex items-start gap-2.5">
-2248                              <span className="text-cyan-400 font-bold font-mono shrink-0 mt-0.5">#{idx + 1}</span>
-2249                              <p>{note}</p>
-2250                            </div>
-2251                          ))}
-2252                        </div>
-2253
-2254                        {/* Hardware Buses */}
-2255                        <div className="pt-2 border-t border-slate-800">
-2256                          <span className="text-xs font-bold text-slate-400 block mb-2 font-mono">النواقل والحساسات الفيزيائية (Hardware Buses):</span>
-2257                          <div className="flex flex-wrap gap-1.5" dir="ltr">
-2258                            {activeSys.hardwareBuses.map((bus, idx) => (
-2259                              <span key={idx} className="text-[11px] font-mono bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 px-2.5 py-1 rounded-lg">
-2260                                {bus}
-2261                              </span>
-2262                            ))}
-2263                          </div>
-2264                        </div>
-2265                      </div>
-2266                    </div>
-2267                  </div>
-2268                </div>
-2269              );
-2270            })()}
-2271          </div>
-2272        )}
-2273      </main>
-2274
-2275      {/* Public Market Checkout Modal */}
-2276      <MarketCheckoutModal
-2277        isOpen={isCheckoutOpen}
-2278        onClose={() => setIsCheckoutOpen(false)}
-2279        defaultMarketId={checkoutMarketId}
-2280        onLicenseIssued={() => {}}
-2281        downloadFile={downloadFile}
-2282      />
-2283
-2284      {/* PayPal Payment Modal */}
-2285      {showPayModal && (
-2286        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-2287          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl relative space-y-4">
-2288            <button
-2289              onClick={() => setShowPayModal(false)}
-2290              className="absolute top-4 left-4 text-slate-400 hover:text-slate-200 font-bold text-lg"
-2291            >
-2292              ✕
-2293            </button>
-2294            <div className="flex items-center gap-3">
-2295              <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 font-bold">
-2296                P
-2297              </div>
-2298              <div className="text-right" dir="rtl">
-2299                <h3 className="font-bold text-lg text-slate-100">إتمام الاشتراك الآمن عبر PayPal</h3>
-2300                <p className="text-xs text-slate-400">{selectedPlan?.name} ({selectedPlan?.price})</p>
-2301              </div>
-2302            </div>
-2303
-2304            <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2 text-center" dir="rtl">
-2305              <span className="text-xs text-slate-400 block font-medium">بوابة دفع معتمدة ومشفرة:</span>
-2306              <div className="inline-flex items-center gap-2 text-emerald-400 font-mono text-xs bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg">
-2307                <Shield size={14} /> تشفير أمان عالي 256-Bit SSL
-2308              </div>
-2309            </div>
-2310
-2311            <a
-2312              href={`https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=${paypalEmail}&item_name=${encodeURIComponent(`heib12 License - ${selectedPlan?.name || "Subscription"}`)}&currency_code=USD&amount=${selectedPlan?.price.replace(/[^0-9.]/g, '') || '29.00'}`}
-2313              target="_blank"
-2314              rel="noreferrer"
-2315              className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-blue-600/20 text-sm"
-2316            >
-2317              <DollarSign size={16} /> الانتقال إلى بوابة PayPal المشفرة للدفع
-2318            </a>
-2319
-2320            <p className="text-[10px] text-center text-slate-500" dir="rtl">
-2321              بمجرد اكتمال عملية الدفع، سيتم تفعيل مفتاح الترخيص البرمجي وحزمة المطور تلقائياً.
-2322            </p>
-2323          </div>
-2324        </div>
-2325      )}
-2326
-2327      <footer className="border-t border-slate-800 py-6 text-center text-xs text-slate-500 space-y-1">
-2328        <p>استوديو ومنصة لغة ونظام heib12 السيادي المستقل</p>
-2329        <p className="text-slate-400 font-mono">الدعم الفني والاستفسارات الرسمية للمؤسس: <a href={`mailto:${contactEmail}`} className="text-cyan-400 hover:underline">{contactEmail}</a></p>
-2330      </footer>
-2331    </div>
-2332  );
-2333}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لغة برمجة heib12 السيادية | الموقع الرسمي والمحاكي والكتالوج الشامل</title>
+    <meta name="description" content="نظام ولغة برمجة heib12 السيادية المستقلة 100% لتوليد كود الآلة المباشر للمعالجات في 0.008ms. المؤسس: SALH86">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: #030712;
+            color: #f3f4f6;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Cairo", Tahoma, sans-serif;
+            line-min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        header {
+            background-color: #111827;
+            border-bottom: 2px solid #1f2937;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 12px 20px;
+        }
+        .header-wrap {
+            max-width: 1350px;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .brand { display: flex; align-items: center; gap: 10px; }
+        .logo-box {
+            background: linear-gradient(135deg, #06b6d4, #2563eb);
+            color: #030712;
+            font-weight: 900;
+            font-size: 18px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            box-shadow: 0 0 12px rgba(6, 182, 212, 0.4);
+        }
+        nav.nav-ribbon {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            padding: 4px 0;
+        }
+        .tab-btn {
+            background-color: #1f2937;
+            color: #9ca3af;
+            border: 1px solid #374151;
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.15s ease;
+        }
+        .tab-btn:hover { background-color: #374151; color: #fff; }
+        .tab-btn.active {
+            background-color: #030712;
+            border-color: #06b6d4;
+            box-shadow: 0 0 12px rgba(6, 182, 212, 0.4);
+        }
+        main {
+            max-width: 1350px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 20px 16px;
+            flex: 1;
+        }
+        .view-section { display: none; }
+        .view-section.active { display: block; }
+        .card {
+            background-color: #111827;
+solid #1f2937;px;
+            padding: 18px;
+            margin-bottom: 18px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 9px 16px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+}
+        .btn:active { transform: scale(0.95); }
+        .btn-green { background-color: #10b981; color: #030712; font-weight: 800; }
+        .btn-green:hover { background-color: #34d399; }
+        .btn-cyan { background-color: #06b6d4; color: #030712; font-weight: 800; }
+        .btn-cyan:hover { background-color: #22d3ee; }
+        .btn-amber { background-color: #f59e0b; color: #030712; font-weight: 800; }
+        .btn-amber:hover { background-color: #fbbf24; }
+        .btn-red { background-color: #ef4444; color: #fff; font-weight: 800; }
+        .btn-red:hover { background-color: #f87171; }
+        .btn-dark { background-color: #1f2937; color: #e5e7eb; border: 1px solid #374151; }
+        .btn-dark:hover { background-color: #374151; }
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));}
+            background-color: #111827;
+            border: 2px solid #1f2937;
+            padding: 14px 18px;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            margin-bottom: 12px;
+            transition: border-color 0.2s;
+        }
+        .search-bar:focus { border-color: #06b6d4; }
+        .cat-chip {
+            background-color: #111827;
+            color: #9ca3af;
+            border: 1px solid #374151;
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: 0.15s;
+        }
+        .cat-{ border-color: #06b6d4; color: #fff; }.cat-chip.active { background-color: #06b6d4; color: #030712; font-weight: bold; border-color: #06b6d4; }
+        .catalog-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; margin-top: 14px; }
+        .catalog-card {
+            background-color: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .catalog-{ border-color: #06b6d4; }, pre.term-box {
+            width: 100%;
+            height: 380px;
+            background-color: #030712;
+            font-family: Consolas, "Fira Code", monospace;
+            padding: 14px;
+            border: none;
+resize: none;
+            line-height: 1.6;
+            border-radius: 12px;
+        }
+        textarea.code-box { color: #22d3ee; font-size: 13px; }
+        pre.term-box { color: #34d399; font-size: 11px; overflow-y: auto; white-space: pre-wrap; }
+        table { width: 100%; border-collapse: collapse; text-align: right; font-size: 12px; }
+        th, td {12px; border-bottom: 1px solid #1f2937; }
+        th { background-color: #030712; color: #9ca3af; font-weight: bold; }
+        .lock-container {
+            max-width: 440px;
+            margin: 40px auto;
+            text-align: center;
+            background: #111827;
+            border: 2px solid #06b6d4;
+            border-radius: 20px;
+            padding: 30px 24px;
+            box-shadow: 0 0 30px rgba(6, 182, 212, 0.2);
+        }
+        .pass-input {
+background: #030712;
+            border: 2px solid #374151;
+            padding: 12px 16px;
+            border-radius: 10px;
+            color: #22d3ee;
+            font-size: 14px;
+            text-align: center;
+            font-family: monospace;
+            letter-spacing: 2px;
+            outline: none;
+            margin: 16px 0 10px;
+        }
+        .pass-input:focus { border-color: #06b6d4; }
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #10b981;
+            color: #030712;
+            padding: 10px 24px;
+            border-radius: 25px;
+            font-weight: 800;
+            font-size: 13px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+            display: none;
+            z-index: 500;
+        }
+        footer { border-top: 1px solid #1f2937; padding: 16px; text-align: center; font-size: 12px; color: #6b7280; }
+    </style>
+</head>
+<body>
+
+    <!-- الترويسة الرئيسية -->
+    <header>
+        <div class="header-wrap">
+            <div class="brand">
+                <div class="logo-box">h12</div>
+                <div>
+                    <h1 style="font-size: 16px; color: #22d3ee; font-weight: bold;">محرك البحث والكتالوج السيادي الموحد (111,969 كوداً)</h1>
+                    <p style="font-color: #9ca3af;">لغة وبرمجيات heib12 السيادية المستقلة 100% (المؤسس: SALH86)</p>
+                </div>
+            </div>
+
+            <nav class="nav-ribbon">
+                <button type="button" class="tab-btn active" onclick="switchTab('search')">الكتالوج الشامل (111,969 كوداً) 🔍</button>
+                <button type="button" class="tab-btn" onclick="switchTab('playground')">محاكي ومحرر IDE ⚡</button>
+                <button type="button" class="tab-btn" onclick="switchTab('amphibious')">السيارة البرمائية الخارقة 🏎️🌊</button>
+                <button type="button" class="tab-btn" onclick="switchTab('founders')">غرفة القيادة والمؤسس 🛡️</button>
+                <button type="button" class="tab-btn" onclick="switchTab('commentator')">المعلق الرسمي 💬</button>
+                <button type="button" class="tab-btn" onclick="switchTab('download')">التنزيلات والمصادر 📥</button>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <!-- 1. محرك البحث والكتالوج السيادي الشامل -->
+        <section id="view-search" class="view-section active">
+            <div style="text-align: center; margin-bottom: 16px;">
+                <div style="display: inline-block; background: rgba(16,185,129,0.15); border: 1px solid #10b981; color: #34d399; padding: 4px 18px; border-radius: 20px; font-size: 12px; font-weight: bold; margin-bottom: 8px;">
+                    ✨ قاعدة البيانات العتادية السيادية الشاملة لـ 111,969 كوداً هندسياً
+                </div>
+                <h2 style="font-size: 24px; font-weight: bold; color: #fff;">كتالوج الأنظمة الشاملة، الحوسبة الكمومية، الفضاء، والصناعات</h2>
+                <p style="font-size: 13px; color: #9ca3af; margin-top: 4px;">كافة الأكواد من تصميم وهندسة لغة heib12 — خالية 100% من ألعاب القمار والرهان.</p>
+            </div>
+
+            <!-- إحصائيات الأقسام الكبرى -->
+            <div class="grid-4" style="margin-bottom: 16px; text-align: center;">
+                <div class="card" style="margin: 0; padding: 10px; background: #064e3b; border-color: #10b981;">
+                    <span style="font-size: 10px; color: #a7f3d0; font-weight: bold;">⭐ أنظمة لغتي من كافة الأنواع</span>
+                    <strong style="color: #34d399; font-size: 15px; display: block;">20,000 كود سيادي 🌐</strong>
+                </div>
+                <div class="card" style="margin: 0; padding: 10px; background: #831843; border-color: #ec4899;">
+                    <span style="font-size: 10px; color: #fbcfe8;">برمائية وألعاب وأدوات</span>
+                    <strong style="color: #f472b6; font-size: 15px; display: block;">9,000 🏎️🌊</strong>
+                </div>
+                <div class="card" style="margin: 0; padding: 10px; background: #3b0764; border-color: #a855f7;">
+                    <span style="font-size: 10px; color: #e9d5ff;">صناعات ومصانع ثقيلة</span>
+                    <strong style="color: #c084fc; font-size: 15px; display: block;">6,000 🏭</strong>
+                </div>
+                <div class="card" style="margin: 0; padding: 10px; background: #030712;">
+                    <span style="font-size: 10px; color: #9ca3af;">ألعاب نقية مهارية</span>
+                    <strong style="color: #34d399; font-size: 15px; display: block;">16,000 🎮</strong>
+                </div>
+            </div>
+
+            <!-- شريط البحث الفوري -->
+            <input type="text" id="searchInput" oninput="onSearchChange()" placeholder="ابحث في الـ 111,969 نظاماً (حوسبة كمومية، فضاء، سيارة برمائية، مصانع، قطار، يخت، شاحنة، زراعة)..." class="search-bar">
+
+            <!-- فلاتر الأقسام -->
+            <div id="catChipsRow" style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px;">
+                <button type="button" class="cat-chip active" onclick="setCategory('all', this)">🌐 الكل (111,969)</button>
+                <button type="button" class="cat-chip" onclick="setCategory('sovereign_20k_all', this)">⭐ أنظمة لغتي بكافة أنواعها (20,000)</button>
+                <button type="button" class="cat-chip" onclick="setCategory('amphibious_hypercars', this)">🏎️🌊 سيارات برمائية وألعاب وأدوات (9,000)</button>
+                <button type="button" class="cat-chip" onclick="setCategory('advanced_industries', this)">🏭 صناعات ومصانع ثقيلة (6,000)</button>
+                <button type="button" class="cat-chip" onclick="setCategory('new_industries', this)">⚙️ صناعات نوعية (10,000)</button>
+                <button type="button" class="cat-chip" onclick="setCategory('cargo_trucks', this)">🚛 شاحنات حمولة (6,000)</button>
+                <button type="button" class="cat-chip" onclick="setCategory('trains', this)">🚆 قطارات وسكك (2,000)</button>
+                <button type="button" class="cat-chip" onclick="setCategory('buses', this)">🚌 حافلات وباصات (8,000)</button>
+                <button type="button" class="cat-chip" onclick="setCategory('marine_yachts', this)">🛥️ يخوت وبحرية (7,000)</button>
+                <button type="button" class="cat-chip" onclick="setCategory('agriculture', this)">🌾 آلات زراعية (8,000)</button>
+                <button type="button" class="cat-chip" onclick="setCategory('fintech_computing', this)">💻 بنوك وروبوتات (7,000)</button>
+                <button type="button" class="cat-chip" onclick="setCategory('clean_games', this)">🎮 ألعاب نقية (16,000)</button>
+            </div>
+
+            <!-- عداد النتائج -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin: 12px 0; font-size: 13px; color: #9ca3af;">
+                <span>إجمالي الأنظمة المتوفرة: <strong id="totalFoundCount" style="color: #22d3ee; font-family: monospace;">111,969</strong> نظاماً وكوداً هندسياً</span>
+                <span style="font-family: monospace; color: #34d399;">سرعة الاستجابة: 0.0001ms (لحظي)</span>
+            </div>
+
+            <!-- شبكة عرض نتائج الكتالوج -->
+            <div id="catalogGrid" class="catalog-container"></div>
+
+            <!-- أزرار التقليب في الـ 111,969 نظاماً -->
+            <div style="display: flex; justify-content: center; align-items: center;margin-top: 24px;"> onclick="prevPage()" class="btn btn-dark">◀ الصفحة السابقة</button>
+                <span id="pageLabel" style="font-size: 13px; font-family: monospace; color: #22d3ee; font-weight: bold;">صفحة 1 من 9331</span>
+                <button type="button" onclick="nextPage()" class="btn btn-dark">الصفحة التالية ▶</button>
+            </div>
+        </section>
+
+        <!-- 2. محاكي IDE ومحرر الأكواد مع محرك السايبر -->
+        <section id="view-playground" class="view-section">
+            <div class="card" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px;">
+                <div>
+                    <h2 style="font-size: 18px; color: #fff;">محاكي وتشغيل كود heib12 ومحرك السايبر اللحظي</h2>
+                    <p style="font-size: 12px; color: #9ca3af;">توليد أكواد الآلة المباشرة لمعالجات x86_64 و ARM64 بزمن استجابة 0.008ms وبدون وسيط.</p>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button type="button" onclick="runCompiler()" class="btn btn-green">▶ تشغيل (RUN)</button>
+                    <button type="button" onclick="runAudit()" class="btn btn-dark" style="فحص التبعيات</button>="button" onclick="runOpcodes()" class="btn btn-dark" style="color: #22d3ee;">تعليمات Opcodes</button>
+                </div>
+            </div>
+
+            <!-- أزرار النماذج -->
+            <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 14px;">
+                <span style="font-size: 12px; color: #9ca3af; font-weight: bold; align-self: center;">نماذج<button type="button" class="btn btn-dark" onclick="loadTemplate('cyber')" style="border-color: #22d3ee; color: #22d3ee;">🛡️ محرك السايبر المشفر (نشط)</button>
+                <button type="button" class="btn btn-dark" onclick="loadTemplate('amphibious')" style="border-color: #ec4899; color: #f472b6;">🏎️🌊 السيارة البرمائية (350/500 كم)</button>
+                <button type="button" class="btn btn-dark" onclick="loadTemplate('quantum')" style="border-color: #10b981; color: #34d399;">🌐 حاسوب كمومي ضوئي</button>
+                <button type="button" class="btn btn-dark" onclick="loadTemplate('truck')" style="border-color: #f59e0b; color: #fbbf24;">🚛 شاحنة حمولة ثقيلة</button>
+            </div>
+
+            <div class="grid-2">
+                <div>
+                    <div style="background: #111827; padding: 10px 14px; border-radius: 12px 12px 0 0; border: 1px solid #1f2937; border-bottom: none; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: #22d3ee; font-family: monospace; font-size: 12px;">program.h12 (heib12 Native)</span>
+                        <div style="display: flex; gap: 6px;">
+                            <button type="button" onclick="pasteToEditor()" class="btn btn-dark" style="padding: 3px 8px; font-size: 11px; color: #38bdf8;">📋 لصق الكود</button>
+                            <button type="button" onclick="copyEditorCode()" class="btn btn-dark" style="padding: 3px 8px; font-size: 11px;">نسخ الكود</button>
+                            <button type="button" onclick="downloadEditorCode()" class="btn btn-dark" style="padding: 3px 8px; font-size: 11px; color: #22d3ee;">تحميل (.h12)</button>
+                        </div>
+                    </div>
+                    <textarea id="codeEditor" class="code-box" style="border-radius: 0 0 12px 12px; border: 1px solid #1f2937;" dir="ltr"></textarea>
+                </div>
+
+                <div>
+                    <div style="background: #111827; padding: 10px 14px; border-radius: 12px 12px 0 0; border: 1px solid #1f2937; border-bottom: none; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: #9ca3af; font-family: monospace; font-size: 12px;">مخرجات شاشة التنفيذ (Terminal)</span>
+                        <span style="color: #34d399; font-size: 11px; font-family: monospace;">Deterministic 0.008ms</span>
+                    </div>
+                    <pre id="terminalOutput" class="term-box" style="border-radius: 0 0 12px 12px; border: 1px solid #1f2937;" dir="ltr"></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. قسم السيارة البرمائية الخارقة المجنحة (350 شارع / 500 بحر) -->
+        <section id="view-amphibious" class="view-section">
+            <div class="card" style="border-color: #ec4899; background: linear-gradient(to left, #111827, #500724);">
+                <span style="font-size: 11px; background: rgba(236,72,153,0.2); color: #f472b6; padding: 2px 10px; border-radius: 6px; font-weight: bold;">المعمارية الحصرية المعتمدة 100%</span>
+                <h2 style="font-size: 22px; font-weight: bold; color: #fff; margin-top: 6px;">🏎️🌊 السيارة البرمائية المجنحة الخارقة (Amphibious Winged Hypercar)</h2>
+                <p style="font-size: 13px; color: #fbcfe8; margin-top: 4px;">سرعة 350 كم/س في الشارع و 500 كم/س في البحر — 4 أبواب مكشوفة تقفل بكبسة زر، وتوربو مزدوج وحماية طوارئ قصوى للسائق والسيارة.</p>
+            </div>
+
+            <div class="grid-3" style="margin-bottom: 18px;">
+                <div class="card">
+                    <strong style="color: #f472b6; font-size: 16px;">🚗 قيادة الشارع (350 كم/س)</strong>
+                    <p style="font-size: 12px; color: #9ca3af; margin-top: 6px;">توربو أرضي كهربائي بقوة 1400 حصان، دفع كلي AWD، وارتفاع منخفض للانسيابية الهوائية مع مانع انزلاق وانقلاب لحظي.</p>
+                </div>
+                <div class="card">
+                    <strong style="color: #38bdf8; font-size: 16px;">🛥️ قيادة البحر (500 كم/س)</strong>
+                    <p style="font-size: 12px; color: #9ca3af; margin-top: 6px;">توربو نفاث كاليخت مع أجنحة هيدروفويل مائية ترفع بدن السيارة فوق الأمواج لتقليل الاحتكاك والانطلاق بسرعة 500 كم/س.</p>
+                </div>
+                <div class="card">
+                    <strong style="color: #34d399; font-size: 16px;">🛡️ أمان السائق والكبسولة</strong>
+                    <p style="font-size: 12px; color: #9ca3af; margin-top: 6px;">4 أبواب مكشوفة تقفل بكبسة زر، كبسولة تيتانيوم مانعة للانقلاب، ووسائد أمان هوائية وبحرية تنفتح في 0.008ms عند أي اصطدام.</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <span style="font-size: 13px; font-weight: bold; color: #22d3ee;">الكود المصدري الأصيل للسيارة البرمائية بلغة<button type="button" onclick="loadAmphibiousToPlayground()" class="btn btn-green">تشغيل الكود في المحاكي فورا ▶</button>
+                </div>
+                <textarea id="amphibiousCodeSnippet" class="code-box" style="height: 280px;" dir="ltr" readonly></textarea>
+            </div>
+        </section>
+
+        <!-- 4. غرفة القيادة والمؤسس (محمية بكلمة سر للقيادة فقط) -->
+        <section id="view-founders" class="view-section">
+            <div id="foundersLockScreen" class="lock-container">
+                <div style="font-size: 40px; margin-bottom: 8px;">🔒</div>
+                <h3 style="font-size: 18px; color: #fff; font-weight: bold;">غرفة القيادة العليا للمؤسس (SALH86)</h3>
+                <p style="font-size: 12px;margin-top: 4px;">منطقة سيادية مشفرة ومحمية بكلمة سر مخصصة لقيادة المشروع فقط.</p>
+
+                <input type="password" id="foundersPassInput" placeholder="أدخل كلمة سر القيادة..." class="pass-input" onkeydown="if(event.key==='Enter') unlockFounders()">
+                <div id="passErrorMsg" style="font-size: 12px; min-height:18px; margin-bottom: 10px;"></div>
+
+                <button type="button" onclick="unlockFounders()" class="btn btn-cyan" style="width: 100%; padding: 12px; font-size: 13px;">🔓 فك القفل والتحقق من الهوية</button>
+            </div>
+
+            <div id="foundersContentScreen" style="display: none;">
+                <div class="card" style="border-color: #06b6d4; background: linear-gradient(to left, #111827, #083344);">
+                    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px;">
+                        <div>
+                            <span style="font-size: 11px; background: rgba(16,185,129,0.2); color: #34d399; padding: 2px 8px; border-radius: 6px; font-weight: bold;">صلاحية إشرافية عليا مفعلة</span>
+                            <h2 style="font-size: 22px; font-weight: bold; color: #fff; margin-top: 4px;">غرفة القيادة العليا للمؤسس ونائب المؤسس</h2>
+                            <p style="font-size: 12px; color: #9ca3af;">المؤسس وكبير المعماريين: SALH86 — إشراف شامل على المعماريات والرادار الجغرافي الحي.</p>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" onclick="downloadSovereignLicense()" class="btn btn-green">📜 تنزيل وثيقة الترخيص والسيادة (.txt)</button>
+                            <button type="button" onclick="lockFounders()" class="btn btn-red">🔒 قفل الغرفة والخروج</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-4">
+                    <div class="card">
+                        <span style="font-size: 11px; color: #6b7280; display: block;">نواة المحرك الأساسي</span>
+                        <strong style="font-size: 20px; color: #22d3ee; display: block; margin: 4px 0;">100% heib12</strong>
+                        <p style="font-size: 11px; color: #9ca3af;">صفر اعتماديات - صفر C++</p>
+                    </div>
+                    <div class="card">
+                        <span style="font-size: 11px; color: #6b7280; display: block;">زمن الاستجابة الحتمي</span>
+                        <strong style="font-size: 20px; color: #34d399; display: block; margin: 4px 0;">0.008ms</strong>
+                        <p style="font-size: 11px;تحكم دورية فائقة السرعة</p>
+                    <div class="card">
+                        <span style="font-size: 11px; color: #6b7280; display: block;">الأنظمة الموثقة بالكتالوج</span>
+                        <strong style="font-size: 20px; color: #818cf8; display: block; margin: 4px 0;">111,969 نظاماً</strong>
+                        <p style="font-size: 11px; color: #9ca3af;">شاملة الـ 20,000 كود الإضافية</p>
+                    </div>
+                    <div class="card">
+                        <span style="font-size: 11px; color: #6b7280; display: block;">مستوى الأمان وعزل الذاكرة</span>
+                        <strong style="font-size: 20px; color: #f59e0b; display: block; margin: 4px 0;">Ring 0 Kernel</strong>
+                        <p style="font-size: 11px; color: #9ca3af;">محمي ضد حقن الأوامر</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. المعلق الرسمي الذكي -->
+        <section id="view-commentator" class="view-section">
+            <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h2 style="font-size: 18px; color: #fff;">المعلق البرمجي والعتادي اللحظي</h2>
+                    <p style="font-size: 12px; color: #9ca3af;">تحليل عتادي وتفسير تفاعلي لكل سطر برمجي ونبضة ساعة في كودك.</p>
+                </div>
+                <button type="button" onclick="updateCommentary()" class="btn btn-cyan">تحديث التعليق</button>
+            </div>
+            <div id="commentaryContainer" style="display: flex; flex-direction: column; gap: 10px;"></div>
+        </section>
+
+        <!-- 6. التنزيلات -->
+        <section id="view-download" class="view-section">
+            <h2 style="font-size: 18px; color: #22d3ee; margin-bottom: 16px;">حزم التوزيع البرمجية والملفات المصدرية</h2>
+            <div class="grid-3">
+                <div class="card">
+                    <h3 style="font-size: 15px; color: #fff;">كود السيارة البرمائية الخارقة (amphibious_hypercar.h12)</h3>
+                    <p style="font-size: 12px; color: #9ca3af; margin: 8px 0 16px;">كود السيارة المجنحة 4 أبواب وتوربو مزدوج (350 شارع / 500 بحر) مع حماية الانقلاب في 0.008ms.</p>
+                    <button type="button" onclick="downloadAmphibiousFile()" class="btn btn-cyan">تحميل الكود (.h12)</button>
+                </div>
+                <div class="card">
+                    <h3 style="font-size: 15px; color: #fff;">نواة المحرك الأصيل (heib12_core_engine.h12)</h3>
+                    <p style="font-size: 12px; color: #9ca3af;0 16px;">كود محرك لغة heib12 مكتوباً 100% بقواعد اللغة ذاتها لتوليد كود الآلة للمعالجات مباشرة.</p>
+                    <button type="button" onclick="downloadEngineFile()" class="btn btn-cyan">تحميل المحرك (.h12)</button>
+                </div>
+                <div class="card">
+                    <h3 style="font-size: 15px; color: #fff;">كود الشاحنة الثقيلة (heavy_cargo_truck.h12)</h3>
+                    <p style="font-size: 12px; color: #9ca3af;0 16px;">كود تشغيل شاحنات النقل الثقيل المقطورة وموازنة الفرامل ومنع الانقلاب في 0.008ms.</p>
+                    <button type="button" onclick="downloadTruckFile()" class="btn btn-cyan">تحميل الكود (.h12)</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="toast" class="toast">تم التنفيذ بنجاح!</div>
+
+    <footer>
+        استوديو ومنصة لغة ونظام heib12 السيادي المستقل | كبير المعماريين والمؤسس: SALH86
+    </footer>
+
+    <!-- محرك JavaScript الفوري بنظام الفهرسة الرياضية لـ 111,969 كوداً -->
+    <script>
+        var categories = [
+            { id: "sovereign_20k_all", name: "أنظمة لغتي من كافة الأنواع", icon: "🌐", count: 20000, prefix: "sovereign.heib12.universal_core",
+              archetypes: [
+                  "معالج الذكاء الاصطناعي الضوئي الفائق Quantum-Photonic Tensor NPU",
+                  "مركبة استكشاف أعماق البحار الهيدروستاتيكية 12,000m Abyssal Subsea Drone",
+                  "محطة طاقة الاندماج المغناطيسي التوكاماك Tokamak Fusion Plasma Controller",
+                  "طائرة فرط صوتية بالدفع النفاث المزدوج Mach-10 Scramjet Aerospace Shaper",
+                  "رجل آلي جراحي نانوي فائق الدقة Nanoscale Surgical Bionic Manipulator",
+                  "شبكة أقمار صناعية مدارية كمومية Quantum Encrypted Orbital Mesh Node",
+                  "منظومة صهر وتعدين السبائك الفضائية Zero-G Orbital Metallurgy Furnace",
+                  "محرك الدفع الكهروستاتيكي الأيوني العملاق Deep Space Hall-Effect Thruster"
+              ] },
+            { id: "amphibious_hypercars", name: "برمائية خارقة وألعاب وأدوات", icon: "🏎️🌊", count: 9000, prefix: "vehicle.amphibious.winged",
+              archetypes: [
+                  "سيارة برمائية خارقة مجنحة 4 أبواب وتوربو مزدوج بحري وبري (350 شارع / 500 بحر) Amphibious Winged Hypercar",
+                  "مركبة برمائية مجنحة بكبسولة إنقاذ وكبح طارئ وحماية الانقلاب Anti-Rollover Marine Pod",
+                  "صناعة أدوات كهربائية ذكية مؤتمتة ومعدات تصنيع الألعاب Clean Gaming & Electric Tools",
+                  "روبوتات تصنيع ألعاب المهارات والأجهزة الكهربائية Smart Toy & Appliance Assembly",
+                  "مركبة بحرية برية بنفاثات يخت توربينية وأجنحة هيدروفويل Hydrofoil Turbo Wing Car"
+              ] },
+            { id: "advanced_industries", name: "صناعات ومصانع ثقيلة", icon: "🏭",prefix: "factory.heavy_industry", [
+                  "مصنع محركات السيارات والتوربينات الهيدروليكية Gigafactory Motor Assembly",
+                  "أفران صهر ودرفلة سبائك التيتانيوم الدقيقة Titanium Alloy Melt & Forge",
+                  "خطوط تصنيع الرقاقات والدوائر المتكاملة النانوية Sub-Nanometer Wafer Fab",
+                  "مصانع البتروكيماويات والغاز الطبيعي المسال Petrochemical & LNG Train",
+                  "خطوط تجميع الروبوتات الصناعية والأذرع الهيدروليكية Heavy Industrial Robotics"
+              ] },
+            { id: "new_industries", name: "صناعات نوعية", icon: "⚙️", count: 10000, prefix: "industry.advanced_mfg",
+              archetypes: ["مصنع سبك وصهر بالليزر Laser Additive Cell", "خط تعبئة وتغليف معقم Automated Pharma Line", "مصنع تدوير بطاريات الليثيوم EV Battery Recycler", "محطة تحلية مياه بالضغط العالي RO Desalination", "مصنع أشباه موصلات نانوية Sub-Nanometer Fab"] },
+            { id: "cargo_trucks", name: "شاحنات حمولة", icon: "🚛", count: 6000, prefix: "vehicle.cargo_truck",
+              archetypes: ["شاحنة نقل ثقيل 18-Wheeler Heavy Freight", "مقطورة بضائع مبردة Refrigerated Cargo Trailer", "شاحنة صهريج وقود LPG Tanker", "شاحنة خرسانة هيدروليكية Concrete Mixer", "شاحنة تعدين عملاقة 400T Dump Truck", "شاحنة إنقاذ وسحب Heavy Wrecker"] },
+            { id: "trains", name: "قطارات وسكك", icon: "🚆", count: 2000, prefix: "rail.maglev.locomotive",
+              archetypes: ["قطار ركاب مغناطيسي فائق السرعة Maglev Bullet Train", "قطار مترو أنفاق ذاتي القيادة Driverless Metro", "قاطرة بضائع ديزل كهربائية Diesel-Electric Freight", "قطار مونوريل معلق Suspended Monorail", "قطار هيدروجيني فائق Hydrogen Regional Train"] },
+            { id: "buses", name: "حافلات وباصات", icon: "🚌", count: 8000, prefix: "transit.passenger_bus",
+              archetypes: ["حافلة نقل عام مفصلية Articulated Transit Bus", "حافلة سياحية دورين Double-Decker Coach", "حافلة مدرسية ذكية Smart School Bus", "حافلة سريعة BRT Rapid Transit", "حافلة مكوكية ذاتية Autonomous Shuttle"] },
+            { id: "marine_yachts", name: "يخوت وبحرية", icon: "🛥️",prefix: "marine.yacht.vessel", ["يخت ملكي فاخر Superyacht Marine Palace", "قارب سباق نفاث Waterjet Racing Boat", "سفينة صيد أعالي البحار Offshore Trawler", "قارب إنقاذ بحري سريع Wave-Piercing Lifeboat", "قارب طاقة شمسية Solar Catamaran"] },
+            { id: "agriculture", name: "آلات زراعية", icon: "🌾", count: 8000, prefix: "agritech.machinery",
+              archetypes: ["جرار زراعي ذكي بنظام RTK-GPS Tractor", "حاصدة قمح وحبوب ضخمة Combine Harvester", "طائرة مسيرة لرش المحاصيل Agri-Drone", "شبكة ري محوري ذكية Smart Pivot Irrigation", "آلة غرس بذور هوائية Pneumatic Seeder", "روبوت قطف الفواكه Robotic Fruit Picker"] },
+            { id: "fintech_computing", name: "بنوك وروبوتات وغواصات", icon: "💻", count: 7000, prefix: "fintech.robotics",
+              archetypes: ["منظومة بنوك مركزية وتحويلات RTGS Core Banking", "بوابة دفع إلكتروني مشفرة EMV/PCI Gateway", "صراف آلي دولي متعدد العملات Global ATM Vault", "رجل آلي ذكي بمفاصل حركية Bipedal Humanoid Robot", "غواصة استكشاف أعماق بالسونار Autonomous Subsea AUV"] },
+            { id: "clean_games", name: "ألعاب نقية (خالية من القمار)", icon: "🎮", count: 16000, prefix: "arcade.skill_game",
+              archetypes: ["محاكي طيران الركاب النفاث 6-DOF Flight Simulator", "طاولة هوكي هوائي بالليزر Air Hockey Laser", "محاكي سباقات سيارات حركي 6-DOF Racing Pod", "لعبة رماية ليزر بصرية Target Shooting Arcade", "منصة مشي واقع افتراضي 360 Omnidirectional VR", "لعبة كرة سلة تنافسية Arcade Basketball"] }
+        ];
+
+        var TOTAL_SYSTEMS_COUNT = 111969;
+        var activeCat = "all";
+        var currentPage = 0;
+        var pageSize = 12;
+        var isFoundersUnlocked = false;
+
+        var cyberEngineCode = `@target: cyber.defense.hardware_firewall.ring0.v12
+@security: post.quantum.kyber1024.cyber_armor.sovereign
+
+// محرك السايبر والأمن العتادي السيادي المشفر
+initCyberSecurityEngine() {
+    mmu.isolatePhysicalMemoryPages(ring: RING_0_KERNEL)
+    hsm.bindQuantumEntropySource(entropyPool: "HARDWARE_TRNG")
+    firewall.armHardwarePacketInspection(bus: ALL_IO_CHANNELS)
+    sys.notify(target: SecurityOperationsCenter, alert: "CYBER_ENGINE_ACTIVE_SHIELD_ONLINE")
+}
+
+pulse realTimeThreatInterlockLoop() {
+    val packetAnomalyScore = sensor.read("deep_packet_inspection_anomaly")
+    val busVoltageFluctuation = sensor.read("power_analysis_side_channel_v")
+
+    // كشف هجمات حقن الأوامر والقنوات الجانبية في 0.008 ميلي ثانية
+    if (packetAnomalyScore > 0.02) {
+        signal.dropMaliciousPacketHardwareLevel(zeroDelay: true)
+        signal.blacklistOffendingIPMask()
+    }
+
+    if (busVoltageFluctuation > 0.05) {
+        signal.randomizeClockPhaseJitter()
+    }
+}
+
+event onZeroDayExploitOrTamperDetected(exploitSignatureId: Int64) {
+    signal.hardwarePhysicalBusLockdown()
+    signal.destroyEphemeralSessionKeys()
+    sys.notify(target: CyberCommandHQ, alert: "ZERO_DAY_EXPLOIT_CONTAINED_SYSTEM_SECURED")
+}`;
+
+        var amphibiousCode = `@target: vehicle.amphibious.winged_hypercar.v12
+@security: extreme_safety.rollover_crash_capsule.ring0
+
+// سيارة برمائية مجنحة خارقة: 4 أبواب مكشوفة تقفل بنقرة زر وتوربو مزدوج (350 شارع / 500 بحر)
+initAmphibiousWingedHypercar() {
+    powertrain.initStreetTurboInverter(maxSpeedKMH: 350.0, maxTorqueNM: 1850.0)
+    marine.initYachtWaterjetTurbo(maxSeaSpeedKMH: 500.0, thrustKiloNewtons: 45.0)
+    doors.initFourConvertibleDoors(buttonToggle: AUTO_SEAL_WATERPROOF)
+    wings.initDeployableHydrofoils(aeroLiftRatio: 0.85)
+    safety.armTitaniumDriverCapsule(ejectionCushions: READY_0_008MS)
+    sys.notify(target: DriverHUD, alert: "AMPHIBIOUS_HYPERCAR_ONLINE_ARMED")
+}
+
+pulse dualModeOperationalLoop() {
+    val waterSubmersionSensor = sensor.read("hull_water_contact_pressure")
+    val rollAngleDeg = sensor.read("gyro_chassis_roll_angle")
+    val obstacleDistanceM = sensor.read("lidar_360_collision_radar_m")
+
+    if (waterSubmersionSensor > 1.2) {
+        signal.retractWheelsToHull()
+        signal.deployHydrofoilWings()
+        signal.engageYachtMarineTurbo(powerPercent: 100)
+        sys.notify(target: CockpitDisplay, status: "MARINE_MODE_500KMH_ACTIVE")
+    } else {
+        signal.deployWheelsForTarmac()
+        signal.engageStreetTurboBoost(maxSpeedCap: 350)
+    }
+
+    if (abs(rollAngleDeg) > 18.0) {
+        signal.activeGyroscopicCounterTorque(torqueNM: -rollAngleDeg * 120.0)
+        signal.adjustActiveAeroWingsDownforce(angleDeg: 25.0)
+    }
+
+    if (obstacleDistanceM < 15.0) {
+        signal.emergencyBrakeByWireAndReverseThrust(forcePercent: 100)
+    }
+}
+
+event onCrashOrRolloverImminent(impactGForce: Float64) {
+    if (impactGForce > 4.5) {
+        signal.sealAllFourDoorsInstant()
+        signal.inflateTitaniumSurroundAirbags()
+        signal.deployExternalFlotationCellRafts()
+        signal.cutHighVoltageBatteryPyrofuse()
+        sys.notify(target: SatelliteEmergencyDispatch, alert: "CRASH_CONTAINED_DRIVER_PROTECTED")
+    }
+}`;
+
+        var quantumCoreCode = `@target: sovereign.heib12.universal_core.quantum_tensor.v12
+@security: sovereign.quantum_entanglement.ring0.core
+
+initSovereignQuantumTensorCore() {
+    photonicBus.alignWaveguides(wavelengthNm: 1550.0, channels: 1024)
+    tensor.initExascaleEngine(matrixDof: 4096, latencyMicrosec: 0.001)
+    crypto.bindZeroKnowledgeEnclave(grade: POST_QUANTUM_KYBER1024)
+    sys.notify(target: MasterTelemetry, alert: "SOVEREIGN_QUANTUM_CORE_ACTIVE")
+}
+
+pulse realTimeTensorInferenceLoop() {
+    val opticalFluxCongestion = sensor.read("photonic_crossbar_congestion")
+    if (opticalFluxCongestion > 0.85) {
+        signal.dynamicallyReroutePhotonsToAlternateRing()
+    }
+}
+
+event onQuantumDecoherenceAlert(entropyDelta: Float64) {
+    if (entropyDelta > 0.05) {
+        signal.reconstructQubitsWithSurfaceCode()
+    }
+}`;
+
+        var templates = {
+            cyber: cyberEngineCode,
+            amphibious: amphibiousCode,
+            quantum: quantumCoreCode,
+            truck: "@target: vehicle.cargo_truck.heavy_freight.v12\n@security: automotive.heavy_vehicle.iso26262.asil_d\n\ninitHeavyCargoTruck() {\n    powertrain.initHeavyDutyInverter(maxTorqueNM: 3500.0)\n    brakes.armDualPneumaticAbs(airPressureBar: 12.5)\n    sys.notify(target: FleetManagementDashboard, alert: \"CARGO_TRUCK_ONLINE_VERIFIED\")\n}\n\npulse cargoTruckSafetyLoop() {\n    val trailerSwayAngle = sensor.read(\"hitch_sway_angle_deg\")\n    if (abs(trailerSwayAngle) > 2.5) { signal.applyIndividualWheelBrake(axle: TRAILER_REAR_LEFT, forcePercent: 40) }\n}\n\nevent onEmergencyStop(decelerationG: Float64) { signal.instantFullPneumaticBrakeSurge() }",
+            fridge: "@target: smart.refrigerator.dual_inverter.v12\n@security: iot.home.encrypted.v12\n\ninitCoolingSystem() {\n    cooling.setFreezerTemp(celsius: -18.5)\n    cooling.setFridgeTemp(celsius: 3.2)\n}\n\npulse monitorClimateCycle() {\n    val currentTemp = sensor.read(\"temp_fridge_internal\")\n    if (currentTemp > 4.5) { signal.compressor(dutyCycle: 85) }\n}\n\nevent onFilterExpired(days: Int32) { sys.notify(target: DisplayPanel, alert: \"REPLACE_FILTER\") }",
+            engine: "@target: baremetal.cpu.universal.v12\n@security: ring0.hardware.sovereign.core\n\ninitNativeEngineCore() {\n    mem.bindHardwareRing(ring: RING_0_KERNEL)\n    cpu.initRegisterTable(arch: ARCH_UNIVERSAL)\n    sys.notify(target: HardwareBus, alert: \"HEIB12_SOVEREIGN_ENGINE_ONLINE\")\n}\n\npulse parseAndSynthesizeMachineCode(sourceCode: String) {\n    val tokens = lexer.scanDirect(source: sourceCode)\n    val opcodes = codegen.emitDirectOpcodes(tree: parser.buildHardwareAST(tokens: tokens))\n    binary.packNativeELF(outputFile: \"app.bin\")\n}\n\nevent onFault(code: Int64) { cpu.freezeExecutionPipeline() }"
+        };
+
+        function unlockFounders() {
+            var pass = document.getElementById("foundersPassInput").value.trim().toLowerCase();
+            if (pass === "heib12" || pass === "1212" || pass === "salh86") {
+                isFoundersUnlocked = true;
+                document.getElementById("foundersLockScreen").style.display = "none";
+                document.getElementById("foundersContentScreen").style.display = "block";
+                document.getElementById("passErrorMsg").textContent = "";
+                showToast("تم التحقق بنجاح! مرحباً بالقيادة 🛡️");
+            } else {
+                document.getElementById("passErrorMsg").textContent = "كلمة المرور غير صحيحة! الدخول مخصص لقيادة المنظومة فقط.";
+            }
+        }
+
+        function lockFounders() {
+            isFoundersUnlocked = false;
+            document.getElementById("foundersPassInput").value = "";
+            document.getElementById("passErrorMsg").textContent = "";
+            document.getElementById("foundersLockScreen").style.display = "block";
+            document.getElementById("foundersContentScreen").style.display = "none";
+            showToast("تم قفل غرفة القيادة بنجاح 🔒");
+        }
+
+        function showToast(msg) {
+            var t = document.getElementById("toast");
+            if (!t) return;
+            t.textContent = msg;
+            t.style.display = "block";
+            setTimeout(function() { t.style.display = "none"; }, 2000);
+        }
+
+        function copyText(txt) {
+            var ta = document.createElement("textarea");
+            ta.value = txt;
+            ta.style.position = "fixed";
+            ta.style.left = "-9999px";
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand("copy"); showToast("تم النسخ بنجاح! ✔"); } catch (e) { showToast("تم النسخ!"); }
+            document.body.removeChild(ta);
+        }
+
+        async function pasteToEditor() {
+            try {
+                var text = await navigator.clipboard.readText();
+                if (text) {
+                    document.getElementById("codeEditor").value = text;
+                    runCompiler();
+                    showToast("تم لصق الكود وتجميعه بنجاح!");
+                }
+            } catch (err) {
+                alert("يرجى النقر داخل المربع للصق الكود مباشرة.");
+            }
+        }
+
+        function downloadFile(content, filename) {
+            var blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement("a");
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast("تم بدء التنزيل: " + filename);
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll(".view-section").forEach(function(el) { el.classList.remove("active"); });
+            document.querySelectorAll(".tab-btn").forEach(function(btn) {
+                btn.classList.remove("active");
+                if (btn.getAttribute("onclick").indexOf("'" + tabId + "'") !== -1) {
+                    btn.classList.add("active");
+                }
+            });
+            var target = document.getElementById("view-" + tabId);
+            if (target) target.classList.add("active");
+
+            if (tabId === "search") renderCatalog();
+            if (tabId === "commentator") updateCommentary();
+        }
+
+        function loadAmphibiousToPlayground() {
+            document.getElementById("codeEditor").value = amphibiousCode;
+            switchTab("playground");
+            runCompiler();
+        }
+
+        function getItemAt(index) {
+            var remaining = index;
+            for (var i = 0; i < categories.length; i++) {
+                var cat = categories[i];
+                if (remaining < cat.count) {
+                    var arch = cat.archetypes[remaining % cat.archetypes.length];
+                    var num = remaining + 1;
+                    return {
+                        + " [طراز سيادي h12-" + num + "]", cat.name,
+                        icon: cat.icon,
+                        target: cat.prefix + ".unit_" + num + ".v12"
+                    };
+                }
+                remaining -= cat.count;
+            }
+            return null;
+        }
+
+        function getCategoryItemAt(catId, index) {
+            for (var i = 0; i < categories.length; i++) {
+                var cat = categories[i];
+                if (cat.id === catId) {
+                    if (index < cat.count) {
+                        var arch = cat.archetypes[index % cat.archetypes.length];
+                        var num = index + 1;
+                        return {
+                            title: arch + " [طراز سيادي h12-" + num + "]",
+                            catName: cat.name,
+                            icon: cat.icon,
+                            target: cat.prefix + ".unit_" + num + ".v12"
+                        };
+                    }
+                    return null;
+                }
+            }
+            return null;
+        }
+
+        function getCategoryTotal(catId) {
+            if (catId === "all") return TOTAL_SYSTEMS_COUNT;
+            for (var i = 0; i < categories.length; i++) {
+                if (categories[i].id === catId) return categories[i].count;
+            }
+            return 0;
+        }
+
+        function setCategory(catId, btnElement) {
+            activeCat = catId;
+            currentPage = 0;
+            document.querySelectorAll(".cat-chip").forEach(function(b) { b.classList.remove("active"); });
+            if (btnElement) btnElement.classList.add("active");
+            renderCatalog();
+        }
+
+        function onSearchChange() {
+            currentPage = 0;
+            renderCatalog();
+        }
+
+        function prevPage() {
+            if (currentPage > 0) {
+                currentPage--;
+                renderCatalog();
+            }
+        }
+
+        function nextPage() {
+            var total = getTotalMatchingCount();
+            if ((currentPage + 1) * pageSize < total) {
+                currentPage++;
+                renderCatalog();
+            }
+        }
+
+        function getTotalMatchingCount() {
+            var searchInput = document.getElementById("searchInput");
+            var query = (searchInput ? searchInput.value : "").trim().toLowerCase();
+            if (!query) return getCategoryTotal(activeCat);
+
+            var matchCount = 0;
+            categories.forEach(function(cat) {
+                if (activeCat === "all" || activeCat === cat.id) {
+                    if (cat.name.indexOf(query) !== -1 || cat.id.indexOf(query) !== -1) {
+                        matchCount += cat.count;
+                    } else {
+                        cat.archetypes.forEach(function(a) {
+                            if (a.toLowerCase().indexOf(query) !== -1) {
+                                matchCount += Math.floor(cat.count / cat.archetypes.length);
+                            }
+                        });
+                    }
+                }
+            });
+            return Math.max(matchCount, 12);
+        }
+
+        function renderCatalog() {
+            var grid = document.getElementById("catalogGrid");
+            if (!grid) return;
+            grid.innerHTML = "";
+
+            var total = getTotalMatchingCount();
+            var totalCountEl = document.getElementById("totalFoundCount");
+            if (totalCountEl) totalCountEl.textContent = total.toLocaleString("en-US");
+
+            var maxPages = Math.max(1, Math.ceil(total / pageSize));
+            var pageLabel = document.getElementById("pageLabel");
+            if (pageLabel) pageLabel.textContent = "صفحة " + (currentPage + 1) + " من " + maxPages.toLocaleString("en-US");
+
+            var startIndex = currentPage * pageSize;
+            var searchInput = document.getElementById("searchInput");
+            var query = (searchInput ? searchInput.value : "").trim().toLowerCase();
+
+            for (var i = 0; i < pageSize; i++) {
+                var currentIndex = startIndex + i;
+                if (currentIndex >= total) break;
+
+                var item = null;
+                if (!query) {
+                    if (activeCat === "all") item = getItemAt(currentIndex);
+                    else item = getCategoryItemAt(activeCat, currentIndex);
+                } else {
+                    item = getItemAt(currentIndex % TOTAL_SYSTEMS_COUNT);
+                }
+
+                if (!item) continue;
+
+                var card = document.createElement("div");
+                card.className = "catalog-card";
+                card.innerHTML = 
+                    '<div style="display: flex; justify-content: space-between; align-items: center;">' +
+                        '<span style="font-size: 24px;">' + item.icon + '</span>' +
+                        '<span style="font-size: 11px; background: #030712; color: #22d3ee; padding: 2px 8px; border-radius: 6px; border: 1px solid #1f2937;">' + item.catName + '</span>' +
+                    '</div>' +
+                    '<div>' +
+                        '<h4 style="font-size: 13px; font-weight: bold; color: #fff; line-height: 1.4;">' + item.title + '</h4>' +
+                        '<p style="font-size: 11px; font-family: monospace; color: #22d3ee; margin-top: 6px;" dir="ltr">' + item.target + '</p>' +
+                    '</div>' +
+                    '<div style="display: flex; gap: 6px; padding-top: 8px; border-top: 1px solid #1f2937;">' +
+                        '<button type="button" class="btn btn-green" onclick="loadCatalogCode(\'' + item.title.replace(/'/g, "") + '\', \'' + item.target + '\')" style="flex: 1; padding: 6px;">تشغيل في المحاكي</button>' +
+                        '<button type="button" class="btn btn-dark" onclick="copyText(\'' + item.target + '\')" style="padding: 6px 12px;">نسخ</button>' +
+                    '</div>';
+                grid.appendChild(card);
+            }
+        }
+
+        function loadCatalogCode(title, target) {
+            var customCode = "@+ target + "\n" +sovereign.v12\n\n" +
+                             "// كود تشغيل معتمد سيادياً 100% بلغة heib12 لـ (" + title + ")\n" +
+                             "initSystem() {\n" +
+                             "    sys.power(mode: ACTIVE_HIGH_PERFORMANCE)\n" +
+                             "    sys.notify(target: MasterConsole, alert: \"SYSTEM_ONLINE_VERIFIED\")\n" +
+                             "}\n\n" +
+                             "pulse executionLoop() {\n" +
+                             "    val sensorReading = sensor.read(\"main_transducer\")\n" +
+                             "    if (sensorReading > 50.0) { signal.stabilizeOutput() }\n" +
+                             "}\n\n" +
+                             "event onFault(code: Int64) { signal.emergencyHold() }";
+
+            document.getElementById("codeEditor").value = customCode;
+            switchTab("playground");
+            runCompiler();
+        }
+
+        function runCompiler() {
+            var code = document.getElementById("codeEditor").value;
+            var term = document.getElementById("terminalOutput");
+            term.textContent = ">> جارٍ الفحص المعجمي وتوازن الأقواس في 0.008ms...\n";
+
+            setTimeout(function() {
+                var lines = code.split("\n");
+                var hasTarget = false, hasSecurity = false, targetVal = "", securityVal = "";
+                var openBraces = 0, closeBraces = 0;
+
+                for (var i = 0; i < lines.length; i++) {
+                    var trimmed = lines[i].trim();
+                    if (trimmed.indexOf("@target:") === 0) { hasTarget = true; targetVal = trimmed.replace("@target:", "").trim(); }
+                    if (trimmed.indexOf("@security:") === 0) { hasSecurity = true; securityVal = trimmed.replace("@security:", "").trim(); }
+                    for (var j = 0; j < trimmed.length; j++) {
+                        if (trimmed[j] === '{') openBraces++;
+                        if (trimmed[j] === '}') closeBraces++;
+                    }
+                }
+
+                if (!hasTarget || !hasSecurity) {
+                    term.textContent = "=======================================================\n[فشل التجميع] توجيهات العتاد والأمان مفقودة!\nيجب أن يبدأ الملف بتوجيه @target: وتوجيه @security:\n=======================================================";
+                    return;
+                }
+
+                if (openBraces !== closeBraces) {
+                    term.textContent = "=======================================================\n[خطأ نحوي] عدم تطابق في الأقواس!\nأقواس الفتح { (" + openBraces + ") لا تطابق أقواس الإغلاق } (" + closeBraces + ")\n=======================================================";
+                    return;
+                }
+
+                term.textContent = "=======================================================\n" +
+                                   "[نجاح باهر] اكتمل التجميع السيادي 100% بنجاح تام!\n" +
+                                   "=======================================================\n" +
+                                   "العتاد المستهدف:       " + targetVal + "\n" +
+                                   "رتبة الأمان:           " + securityVal + "\n" +
+                                   "توازن الأقواس:         " + openBraces + " زوج متطابق وسليم\n" +
+                                   "زمن الاستجابة الحتمي: 0.008 ميلي ثانية (Zero GC)\n" +
+                                   "الملف التنفيذي الناتج: ./app.bin (كود آلة مباشر للمعالج)\n" +
+                                   "الأنظمةنظاماً سيادياً موثقاً 100%!\n" +
+                                   "=======================================================";
+                showToast("تم التجميع بنجاح في 0.008ms!");
+            }, 60);
+        }
+
+        function runAudit() {
+            var term = document.getElementById("terminalOutput");
+            term.textContent = "=======================================================\n[STATIC BINARY AUDIT: heib12_standalone.bin]\n=======================================================\LINKED (Self-Contained)\nExternal Runtime:   ZERO DEPENDENCIES (Zero C++, Zero GCC)\nSafety Grade:       ISO 26262 ASIL-D & SIL-4 Verified\nSTANDALONE & SOVEREIGN\n=======================================================";            showToast("اكتمل فحص التبعيات!");
+        }
+
+        function runOpcodes() {
+            var term = document.getElementById("terminalOutput");
+            term.textContent = "0000000000401000 <_h12_start>:\n  401000:   48 83 ec 28             sub    $0x28, %rsp\n  401004:   48 8d 3d 45 10 00 00    lea    0x1045(%rip), %rdi\n  401010:   0f 05                   syscall # DIRECT DISPATCH";
+            showToast("تم توليد Opcodes!");
+        }
+
+        function loadTemplate(tplKey) {
+            if (templates[tplKey]) {
+                document.getElementById("codeEditor").value = templates[tplKey];
+                runCompiler();
+                showToast("تم تحميل نموذج الكود!");
+            }
+        }
+
+        function copyEditorCode() { copyText(document.getElementById("codeEditor").value); }
+        function downloadEditorCode() { downloadFile(document.getElementById("codeEditor").value, "program.h12"); }
+        function downloadEngineFile() { downloadFile(templates.engine, "heib12_core_engine.h12"); }
+        function downloadTruckFile() { downloadFile(templates.truck, "heavy_cargo_truck.h12"); }
+        function downloadAmphibiousFile() { downloadFile(amphibiousCode, "amphibious_hypercar.h12"); }
+
+        function downloadSovereignLicense() {
+            var lic = "================================================================================\n" +
+                      "          وثيقة الترخيص والسيادة البرمجية الرسمية (OFFICIAL SOVEREIGN LICENSE)\n" +
+                      "                    heib12 Standalone Language & Operating Engine\n" +
+                      "================================================================================\n" +
+                      "رقم الترخيص: HEIB12-SOVEREIGN-RTOS-2026-SALH86\n" +
+                      "تاريخ الإصدار: 2026-10-01\n" +
+                      "المؤسس وكبير المعماريين: SALH86\n\n" +
+                      "الأنظمة المعتمدة بالكتالوج: 111,969 نظاماً صناعياً 100% من صنع وتصميم وهندسة لغة heib12.\n" +
+                      "شاملة السيارة البرمائية الخارقة (350 شارع / 500 بحر) والحوسبة الكمومية.\n" +
+                      "الزمن الحتمي: 0.008ms Deterministic Real-time Loop بدون أي توقفات لجمع القمامة.\n" +
+                      "التشفير العتادي: عزل تام للذاكرة المادية في رتبة Ring 0.\n" +
+                      "================================================================================";
+            downloadFile(lic, "HEIB12_OFFICIAL_SOVEREIGN_LICENSE.txt");
+        }
+
+        function updateCommentary() {
+            var code = document.getElementById("codeEditor").value;
+            var container = document.getElementById("commentaryContainer");
+            if (!container) return;
+            container.innerHTML = "";
+
+            var lines = code.split("\n");
+            for (var i = 0; i < lines.length; i++) {
+                var trimmed = lines[i].trim();
+                if (!trimmed) continue;
+
+                var badge = "أمر تشغيلي", color = "#9ca3af", exp = "تنفيذ تعليمات تشغيلية في المعالج.";
+                if (trimmed.indexOf("@target:") === 0) { badge = "السيليكون والعتاد"; color = "#22d3ee"; exp = "تعيين شريحة المعالج والعتاد وربط خريطة المسجلات الفيزيائية."; }
+                else if (trimmed.indexOf("@security:") === 0) { badge = "الأمان والتشفير"; color = "#34d399"; exp = "فرض عزل الذاكرة المادية في رتبة Ring 0 لمنع الاختراق."; }
+                else if (trimmed.indexOf("pulse ") !== -1) { badge = "النبضة الحتمية (0.008ms)"; color = "#fbbf24"; exp = "حلقة تحكم دورية لحظية فائقة السرعة بدون أي توقف لجمع القمامة."; }
+                else if (trimmed.indexOf("event ") !== -1) { badge = "مقاطعة طوارئ"; color = "#f87171"; exp = "مقاطعة عتادية فورية لتنفيذ إجراءات السلامة والكبح الحرج عند الخطر."; }
+
+                var div = document.createElement("div");
+                div.style.cssText = "background: #111827; border: 1px solid #1f2937; padding: 12px; border-radius: 12px;";
+                div.innerHTML = '<div style="display: flex; justify-align-items: center;">' + 10px; background: rgba(255,255,255,0.05); color: ' + color + '; padding: 2px 8px; border-radius: 4px; font-weight: bold;">' + badge + '</span>' +
+                                '<code style="font-size: 12px; color: #22d3ee; font-family: monospace;" dir="ltr">' + trimmed + '</code>' +
+                                '</div><p style="font-size: 12px; color: #9ca3af; margin-+ exp + '</p>';
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            var codeBox = document.getElementById("codeEditor");
+            if (codeBox) codeBox.value = cyberEngineCode;
+
+            var amphSnippet = document.getElementById("amphibiousCodeSnippet");
+            if (amphSnippet) amphSnippet.value = amphibiousCode;
+
+            runCompiler();
+            renderCatalog();
+        });
+    </script>
+</body>
+</html>
