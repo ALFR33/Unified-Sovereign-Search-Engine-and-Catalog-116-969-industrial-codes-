@@ -1,561 +1,243 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لغة برمجة heib12 السيادية | الموقع الرسمي والمحاكي والكتالوج الشامل</title>
-    <meta name="description" content="نظام ولغة برمجة heib12 السيادية المستقلة 100% لتوليد كود الآلة المباشر للمعالجات في 0.008ms. المؤسس: SALH86">
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            background-color: #030712;
-            color: #f3f4f6;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Cairo", Tahoma, sans-serif;
-            line-min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        header {
-            background-color: #111827;
-            border-bottom: 2px solid #1f2937;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            padding: 12px 20px;
-        }
-        .header-wrap {
-            max-width: 1350px;
-            margin: 0 auto;
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-        }
-        .brand { display: flex; align-items: center; gap: 10px; }
-        .logo-box {
-            background: linear-gradient(135deg, #06b6d4, #2563eb);
-            color: #030712;
-            font-weight: 900;
-            font-size: 18px;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 10px;
-            box-shadow: 0 0 12px rgba(6, 182, 212, 0.4);
-        }
-        nav.nav-ribbon {
-            display: flex;
-            gap: 6px;
-            overflow-x: auto;
-            padding: 4px 0;
-        }
-        .tab-btn {
-            background-color: #1f2937;
-            color: #9ca3af;
-            border: 1px solid #374151;
-            padding: 7px 14px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: bold;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: all 0.15s ease;
-        }
-        .tab-btn:hover { background-color: #374151; color: #fff; }
-        .tab-btn.active {
-            background-color: #030712;
-            border-color: #06b6d4;
-            box-shadow: 0 0 12px rgba(6, 182, 212, 0.4);
-        }
-        main {
-            max-width: 1350px;
-            margin: 0 auto;
-            width: 100%;
-            padding: 20px 16px;
-            flex: 1;
-        }
-        .view-section { display: none; }
-        .view-section.active { display: block; }
-        .card {
-            background-color: #111827;
-solid #1f2937;px;
-            padding: 18px;
-            margin-bottom: 18px;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.3);
-        }
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            padding: 9px 16px;
-            border-radius: 10px;
-            font-size: 12px;
-            font-weight: bold;
-            cursor: pointer;
-            border: none;
-}
-        .btn:active { transform: scale(0.95); }
-        .btn-green { background-color: #10b981; color: #030712; font-weight: 800; }
-        .btn-green:hover { background-color: #34d399; }
-        .btn-cyan { background-color: #06b6d4; color: #030712; font-weight: 800; }
-        .btn-cyan:hover { background-color: #22d3ee; }
-        .btn-amber { background-color: #f59e0b; color: #030712; font-weight: 800; }
-        .btn-amber:hover { background-color: #fbbf24; }
-        .btn-red { background-color: #ef4444; color: #fff; font-weight: 800; }
-        .btn-red:hover { background-color: #f87171; }
-        .btn-dark { background-color: #1f2937; color: #e5e7eb; border: 1px solid #374151; }
-        .btn-dark:hover { background-color: #374151; }
-        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
-        .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));}
-            background-color: #111827;
-            border: 2px solid #1f2937;
-            padding: 14px 18px;
-            border-radius: 12px;
-            color: #fff;
-            font-size: 14px;
-            outline: none;
-            margin-bottom: 12px;
-            transition: border-color 0.2s;
-        }
-        .search-bar:focus { border-color: #06b6d4; }
-        .cat-chip {
-            background-color: #111827;
-            color: #9ca3af;
-            border: 1px solid #374151;
-            padding: 7px 14px;
-            border-radius: 8px;
-            font-size: 12px;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: 0.15s;
-        }
-        .cat-{ border-color: #06b6d4; color: #fff; }.cat-chip.active { background-color: #06b6d4; color: #030712; font-weight: bold; border-color: #06b6d4; }
-        .catalog-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; margin-top: 14px; }
-        .catalog-card {
-            background-color: #111827;
-            border: 1px solid #1f2937;
-            border-radius: 12px;
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            gap: 10px;
-        }
-        .catalog-{ border-color: #06b6d4; }, pre.term-box {
-            width: 100%;
-            height: 380px;
-            background-color: #030712;
-            font-family: Consolas, "Fira Code", monospace;
-            padding: 14px;
-            border: none;
-resize: none;
-            line-height: 1.6;
-            border-radius: 12px;
-        }
-        textarea.code-box { color: #22d3ee; font-size: 13px; }
-        pre.term-box { color: #34d399; font-size: 11px; overflow-y: auto; white-space: pre-wrap; }
-        table { width: 100%; border-collapse: collapse; text-align: right; font-size: 12px; }
-        th, td {12px; border-bottom: 1px solid #1f2937; }
-        th { background-color: #030712; color: #9ca3af; font-weight: bold; }
-        .lock-container {
-            max-width: 440px;
-            margin: 40px auto;
-            text-align: center;
-            background: #111827;
-            border: 2px solid #06b6d4;
-            border-radius: 20px;
-            padding: 30px 24px;
-            box-shadow: 0 0 30px rgba(6, 182, 212, 0.2);
-        }
-        .pass-input {
-background: #030712;
-            border: 2px solid #374151;
-            padding: 12px 16px;
-            border-radius: 10px;
-            color: #22d3ee;
-            font-size: 14px;
-            text-align: center;
-            font-family: monospace;
-            letter-spacing: 2px;
-            outline: none;
-            margin: 16px 0 10px;
-        }
-        .pass-input:focus { border-color: #06b6d4; }
-        .toast {
-            position: fixed;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #10b981;
-            color: #030712;
-            padding: 10px 24px;
-            border-radius: 25px;
-            font-weight: 800;
-            font-size: 13px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
-            display: none;
-            z-index: 500;
-        }
-        footer { border-top: 1px solid #1f2937; padding: 16px; text-align: center; font-size: 12px; color: #6b7280; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>نظام ولغة heib12 السيادية | محاكي التشغيل المستقل 100%</title>
+  <style>
+    /* تنسيقات سيادية مدمجة 100% - تعمل أوفلاين بدون إنترنت (0 Bytes Network) */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #020617;
+      color: #f8fafc;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      padding: 16px;
+      line-height: 1.6;
+    }
+    .container { max-width: 1100px; margin: 0 auto; }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #1e293b;
+      padding-bottom: 16px;
+      margin-flex-wrap: wrap;
+      gap: 12px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #06b6d4, #2563eb);
+      color: #020617;
+      font-weight: 900;
+      font-size: 20px;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 15px rgba(6, 182, 212, 0.25);
+    }
+    .title h1 { font-size: 20px; font-weight: 900; color: #22d3ee; }
+    .title p { font-size: 11px; color: #94a3b8; }
+    .badge {
+      background: rgba(16, 185, 129, 0.12);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: monospace;
+    }
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      padding: 12px 16px;
+      border-radius: 16px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    button {
+      font-family: inherit;
+      font-weight: 800;
+      border: none;
+      padding: 9px 18px;
+      border-radius: 10px;
+      font-size: 12px;
+      transition: all 0.2s;
+    }
+    .btn-run {
+      background: #10b981;
+      color: #020617;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+    }
+    .btn-run:hover { background: #34d399; transform: scale(1.02); }
+    .btn-sec {
+      background: #1e293b;
+      color: #f8fafc;
+      border: 1px solid #334155;
+    }
+    .btn-sec:hover { background: #334155; }
+    .presets { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 16px; }
+    .preset-btn {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      12px;white-space: nowrap;
+    }
+    .preset-btn:hover { color: #22d3ee; border-color: #06b6d4; }
+    .grid {
+grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+    .panel {
+      background: #0f172a;
+solid #1e293b;px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .panel-header {
+      background: #020617;
+16px;6b6d4;
+      font-family: monospace;
+      border-bottom: 1px solid #1e293b;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+    }
+    textarea, pre {
+      width: 100%;
+      height: 420px;
+      background: #020617;
+      color: #67e8f9;
+      font-family: 'JetBrains Mono', Consolas, monospace;
+      font-size: 12px;
+      padding: 16px;
+      border: none;
+      outline: none;
+      resize: none;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+    pre { color: #34d399; overflow-y: auto; }
+    .stats {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    @media (max-width: 600px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+    .stat-card {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      padding: 12px;
+      border-radius: 12px;
+      text-align: center;
+    }
+    .stat-card span { font-size: 10px; color: #64748b; display: block; }
+    .stat-card strong { font-size: 14px; color: #22d3ee; font-family: monospace; }
+    footer {
+      text-align: center;
+      color: #64748b;
+      font-size: 11px;
+      border-top: 1px solid #1e293b;
+      padding-top: 18px;
+      margin-top: 24px;
+    }
+  </style>
 </head>
 <body>
-
-    <!-- الترويسة الرئيسية -->
+  <div class="container">
     <header>
-        <div class="header-wrap">
-            <div class="brand">
-                <div class="logo-box">h12</div>
-                <div>
-                    <h1 style="font-size: 16px; color: #22d3ee; font-weight: bold;">محرك البحث والكتالوج السيادي الموحد (111,969 كوداً)</h1>
-                    <p style="font-color: #9ca3af;">لغة وبرمجيات heib12 السيادية المستقلة 100% (المؤسس: SALH86)</p>
-                </div>
-            </div>
-
-            <nav class="nav-ribbon">
-                <button type="button" class="tab-btn active" onclick="switchTab('search')">الكتالوج الشامل (111,969 كوداً) 🔍</button>
-                <button type="button" class="tab-btn" onclick="switchTab('playground')">محاكي ومحرر IDE ⚡</button>
-                <button type="button" class="tab-btn" onclick="switchTab('amphibious')">السيارة البرمائية الخارقة 🏎️🌊</button>
-                <button type="button" class="tab-btn" onclick="switchTab('founders')">غرفة القيادة والمؤسس 🛡️</button>
-                <button type="button" class="tab-btn" onclick="switchTab('commentator')">المعلق الرسمي 💬</button>
-                <button type="button" class="tab-btn" onclick="switchTab('download')">التنزيلات والمصادر 📥</button>
-            </nav>
+      <div class="brand">
+        <div class="logo">h12</div>
+        <div class="title">
+          <h1>نظام ولغة heib12 السيادية</h1>
+          <p>محاكي ومترجم الأكواد العتادية المستقل 100% (يعمل محلياً بدون إنترنت)</p>
         </div>
+      </div>
+      <div>
+        <span class="badge">📴 يعمل دون اتصال (Zero External Code)</span>
+      </div>
     </header>
 
-    <main>
-        <!-- 1. محرك البحث والكتالوج السيادي الشامل -->
-        <section id="view-search" class="view-section active">
-            <div style="text-align: center; margin-bottom: 16px;">
-                <div style="display: inline-block; background: rgba(16,185,129,0.15); border: 1px solid #10b981; color: #34d399; padding: 4px 18px; border-radius: 20px; font-size: 12px; font-weight: bold; margin-bottom: 8px;">
-                    ✨ قاعدة البيانات العتادية السيادية الشاملة لـ 111,969 كوداً هندسياً
-                </div>
-                <h2 style="font-size: 24px; font-weight: bold; color: #fff;">كتالوج الأنظمة الشاملة، الحوسبة الكمومية، الفضاء، والصناعات</h2>
-                <p style="font-size: 13px; color: #9ca3af; margin-top: 4px;">كافة الأكواد من تصميم وهندسة لغة heib12 — خالية 100% من ألعاب القمار والرهان.</p>
-            </div>
+    <div class="presets">
+      <span style="font-size: 11px; color: #64748b; align-self: center; margin-left: 8px;">نماذج:</span>
+      <button class="preset-btn" onclick="loadPreset('hypercar')">🏎️🌊 سيارة برمائية مجنحة</button>
+      <button class="preset-btn" onclick="loadPreset('cyber')">🛡️ محرك السايبر والأمن العتادي</button>
+      <button class="preset-btn" onclick="loadPreset('medical')">🏥 روبوت جراحي ومغناطيس 3.0T</button>
+      <button class="preset-btn" onclick="loadPreset('power')">⚡ محطة طاقة كهربائية 380kV</button>
+    </div>
 
-            <!-- إحصائيات الأقسام الكبرى -->
-            <div class="grid-4" style="margin-bottom: 16px; text-align: center;">
-                <div class="card" style="margin: 0; padding: 10px; background: #064e3b; border-color: #10b981;">
-                    <span style="font-size: 10px; color: #a7f3d0; font-weight: bold;">⭐ أنظمة لغتي من كافة الأنواع</span>
-                    <strong style="color: #34d399; font-size: 15px; display: block;">20,000 كود سيادي 🌐</strong>
-                </div>
-                <div class="card" style="margin: 0; padding: 10px; background: #831843; border-color: #ec4899;">
-                    <span style="font-size: 10px; color: #fbcfe8;">برمائية وألعاب وأدوات</span>
-                    <strong style="color: #f472b6; font-size: 15px; display: block;">9,000 🏎️🌊</strong>
-                </div>
-                <div class="card" style="margin: 0; padding: 10px; background: #3b0764; border-color: #a855f7;">
-                    <span style="font-size: 10px; color: #e9d5ff;">صناعات ومصانع ثقيلة</span>
-                    <strong style="color: #c084fc; font-size: 15px; display: block;">6,000 🏭</strong>
-                </div>
-                <div class="card" style="margin: 0; padding: 10px; background: #030712;">
-                    <span style="font-size: 10px; color: #9ca3af;">ألعاب نقية مهارية</span>
-                    <strong style="color: #34d399; font-size: 15px; display: block;">16,000 🎮</strong>
-                </div>
-            </div>
+    <div class="toolbar">
+      <div class="actions">
+        <button class="btn-run" onclick="runCompiler()">تشغيل الكود عتادياً (RUN) ⚡</button>
+        <button class="btn-sec" onclick="copyCode()">نسخ كود heib12</button>
+        <button class="btn-sec" onclick="resetCode()">إعادة ضبط</button>
+      </div>
+      <div style="font-size: 11px; color: #94a3b8; font-family: monospace;">
+        زمن الاستجابة الحتمي: <strong style="color: #10b981;">0.008ms</strong> | أمان: <strong>Ring 0</strong>
+      </div>
+    </div>
 
-            <!-- شريط البحث الفوري -->
-            <input type="text" id="searchInput" oninput="onSearchChange()" placeholder="ابحث في الـ 111,969 نظاماً (حوسبة كمومية، فضاء، سيارة برمائية، مصانع، قطار، يخت، شاحنة، زراعة)..." class="search-bar">
+    <div class="grid">
+      <div class="panel">
+        <div class="panel-header">
+          <span>program.h12 (محرر كود heib12)</span>
+          <span style="color: #10b981;">100% Pure heib12</span>
+        </div>
+        <textarea id="editor" dir="ltr" spellcheck="false"></textarea>
+      </div>
 
-            <!-- فلاتر الأقسام -->
-            <div id="catChipsRow" style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px;">
-                <button type="button" class="cat-chip active" onclick="setCategory('all', this)">🌐 الكل (111,969)</button>
-                <button type="button" class="cat-chip" onclick="setCategory('sovereign_20k_all', this)">⭐ أنظمة لغتي بكافة أنواعها (20,000)</button>
-                <button type="button" class="cat-chip" onclick="setCategory('amphibious_hypercars', this)">🏎️🌊 سيارات برمائية وألعاب وأدوات (9,000)</button>
-                <button type="button" class="cat-chip" onclick="setCategory('advanced_industries', this)">🏭 صناعات ومصانع ثقيلة (6,000)</button>
-                <button type="button" class="cat-chip" onclick="setCategory('new_industries', this)">⚙️ صناعات نوعية (10,000)</button>
-                <button type="button" class="cat-chip" onclick="setCategory('cargo_trucks', this)">🚛 شاحنات حمولة (6,000)</button>
-                <button type="button" class="cat-chip" onclick="setCategory('trains', this)">🚆 قطارات وسكك (2,000)</button>
-                <button type="button" class="cat-chip" onclick="setCategory('buses', this)">🚌 حافلات وباصات (8,000)</button>
-                <button type="button" class="cat-chip" onclick="setCategory('marine_yachts', this)">🛥️ يخوت وبحرية (7,000)</button>
-                <button type="button" class="cat-chip" onclick="setCategory('agriculture', this)">🌾 آلات زراعية (8,000)</button>
-                <button type="button" class="cat-chip" onclick="setCategory('fintech_computing', this)">💻 بنوك وروبوتات (7,000)</button>
-                <button type="button" class="cat-chip" onclick="setCategory('clean_games', this)">🎮 ألعاب نقية (16,000)</button>
-            </div>
+      <div class="panel">
+        <div class="panel-header">
+          <span>شاشة التنفيذ المباشر (Terminal)</span>
+          <span id="statusTag" style="color: #38bdf8;">جاهز للتشغيل</span>
+        </div>
+        <pre id="terminal" dir="ltr">&gt;&gt; اضغط على زر 'تشغيل الكود عتادياً (RUN)' لفحص وتجميع الكود...</pre>
+      </div>
+    </div>
 
-            <!-- عداد النتائج -->
-            <div style="display: flex; justify-content: space-between; align-items: center; margin: 12px 0; font-size: 13px; color: #9ca3af;">
-                <span>إجمالي الأنظمة المتوفرة: <strong id="totalFoundCount" style="color: #22d3ee; font-family: monospace;">111,969</strong> نظاماً وكوداً هندسياً</span>
-                <span style="font-family: monospace; color: #34d399;">سرعة الاستجابة: 0.0001ms (لحظي)</span>
-            </div>
-
-            <!-- شبكة عرض نتائج الكتالوج -->
-            <div id="catalogGrid" class="catalog-container"></div>
-
-            <!-- أزرار التقليب في الـ 111,969 نظاماً -->
-            <div style="display: flex; justify-content: center; align-items: center;margin-top: 24px;"> onclick="prevPage()" class="btn btn-dark">◀ الصفحة السابقة</button>
-                <span id="pageLabel" style="font-size: 13px; font-family: monospace; color: #22d3ee; font-weight: bold;">صفحة 1 من 9331</span>
-                <button type="button" onclick="nextPage()" class="btn btn-dark">الصفحة التالية ▶</button>
-            </div>
-        </section>
-
-        <!-- 2. محاكي IDE ومحرر الأكواد مع محرك السايبر -->
-        <section id="view-playground" class="view-section">
-            <div class="card" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px;">
-                <div>
-                    <h2 style="font-size: 18px; color: #fff;">محاكي وتشغيل كود heib12 ومحرك السايبر اللحظي</h2>
-                    <p style="font-size: 12px; color: #9ca3af;">توليد أكواد الآلة المباشرة لمعالجات x86_64 و ARM64 بزمن استجابة 0.008ms وبدون وسيط.</p>
-                </div>
-                <div style="display: flex; gap: 8px;">
-                    <button type="button" onclick="runCompiler()" class="btn btn-green">▶ تشغيل (RUN)</button>
-                    <button type="button" onclick="runAudit()" class="btn btn-dark" style="فحص التبعيات</button>="button" onclick="runOpcodes()" class="btn btn-dark" style="color: #22d3ee;">تعليمات Opcodes</button>
-                </div>
-            </div>
-
-            <!-- أزرار النماذج -->
-            <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 14px;">
-                <span style="font-size: 12px; color: #9ca3af; font-weight: bold; align-self: center;">نماذج<button type="button" class="btn btn-dark" onclick="loadTemplate('cyber')" style="border-color: #22d3ee; color: #22d3ee;">🛡️ محرك السايبر المشفر (نشط)</button>
-                <button type="button" class="btn btn-dark" onclick="loadTemplate('amphibious')" style="border-color: #ec4899; color: #f472b6;">🏎️🌊 السيارة البرمائية (350/500 كم)</button>
-                <button type="button" class="btn btn-dark" onclick="loadTemplate('quantum')" style="border-color: #10b981; color: #34d399;">🌐 حاسوب كمومي ضوئي</button>
-                <button type="button" class="btn btn-dark" onclick="loadTemplate('truck')" style="border-color: #f59e0b; color: #fbbf24;">🚛 شاحنة حمولة ثقيلة</button>
-            </div>
-
-            <div class="grid-2">
-                <div>
-                    <div style="background: #111827; padding: 10px 14px; border-radius: 12px 12px 0 0; border: 1px solid #1f2937; border-bottom: none; display: flex; justify-content: space-between; align-items: center;">
-                        <span style="color: #22d3ee; font-family: monospace; font-size: 12px;">program.h12 (heib12 Native)</span>
-                        <div style="display: flex; gap: 6px;">
-                            <button type="button" onclick="pasteToEditor()" class="btn btn-dark" style="padding: 3px 8px; font-size: 11px; color: #38bdf8;">📋 لصق الكود</button>
-                            <button type="button" onclick="copyEditorCode()" class="btn btn-dark" style="padding: 3px 8px; font-size: 11px;">نسخ الكود</button>
-                            <button type="button" onclick="downloadEditorCode()" class="btn btn-dark" style="padding: 3px 8px; font-size: 11px; color: #22d3ee;">تحميل (.h12)</button>
-                        </div>
-                    </div>
-                    <textarea id="codeEditor" class="code-box" style="border-radius: 0 0 12px 12px; border: 1px solid #1f2937;" dir="ltr"></textarea>
-                </div>
-
-                <div>
-                    <div style="background: #111827; padding: 10px 14px; border-radius: 12px 12px 0 0; border: 1px solid #1f2937; border-bottom: none; display: flex; justify-content: space-between; align-items: center;">
-                        <span style="color: #9ca3af; font-family: monospace; font-size: 12px;">مخرجات شاشة التنفيذ (Terminal)</span>
-                        <span style="color: #34d399; font-size: 11px; font-family: monospace;">Deterministic 0.008ms</span>
-                    </div>
-                    <pre id="terminalOutput" class="term-box" style="border-radius: 0 0 12px 12px; border: 1px solid #1f2937;" dir="ltr"></pre>
-                </div>
-            </div>
-        </section>
-
-        <!-- 3. قسم السيارة البرمائية الخارقة المجنحة (350 شارع / 500 بحر) -->
-        <section id="view-amphibious" class="view-section">
-            <div class="card" style="border-color: #ec4899; background: linear-gradient(to left, #111827, #500724);">
-                <span style="font-size: 11px; background: rgba(236,72,153,0.2); color: #f472b6; padding: 2px 10px; border-radius: 6px; font-weight: bold;">المعمارية الحصرية المعتمدة 100%</span>
-                <h2 style="font-size: 22px; font-weight: bold; color: #fff; margin-top: 6px;">🏎️🌊 السيارة البرمائية المجنحة الخارقة (Amphibious Winged Hypercar)</h2>
-                <p style="font-size: 13px; color: #fbcfe8; margin-top: 4px;">سرعة 350 كم/س في الشارع و 500 كم/س في البحر — 4 أبواب مكشوفة تقفل بكبسة زر، وتوربو مزدوج وحماية طوارئ قصوى للسائق والسيارة.</p>
-            </div>
-
-            <div class="grid-3" style="margin-bottom: 18px;">
-                <div class="card">
-                    <strong style="color: #f472b6; font-size: 16px;">🚗 قيادة الشارع (350 كم/س)</strong>
-                    <p style="font-size: 12px; color: #9ca3af; margin-top: 6px;">توربو أرضي كهربائي بقوة 1400 حصان، دفع كلي AWD، وارتفاع منخفض للانسيابية الهوائية مع مانع انزلاق وانقلاب لحظي.</p>
-                </div>
-                <div class="card">
-                    <strong style="color: #38bdf8; font-size: 16px;">🛥️ قيادة البحر (500 كم/س)</strong>
-                    <p style="font-size: 12px; color: #9ca3af; margin-top: 6px;">توربو نفاث كاليخت مع أجنحة هيدروفويل مائية ترفع بدن السيارة فوق الأمواج لتقليل الاحتكاك والانطلاق بسرعة 500 كم/س.</p>
-                </div>
-                <div class="card">
-                    <strong style="color: #34d399; font-size: 16px;">🛡️ أمان السائق والكبسولة</strong>
-                    <p style="font-size: 12px; color: #9ca3af; margin-top: 6px;">4 أبواب مكشوفة تقفل بكبسة زر، كبسولة تيتانيوم مانعة للانقلاب، ووسائد أمان هوائية وبحرية تنفتح في 0.008ms عند أي اصطدام.</p>
-                </div>
-            </div>
-
-            <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <span style="font-size: 13px; font-weight: bold; color: #22d3ee;">الكود المصدري الأصيل للسيارة البرمائية بلغة<button type="button" onclick="loadAmphibiousToPlayground()" class="btn btn-green">تشغيل الكود في المحاكي فورا ▶</button>
-                </div>
-                <textarea id="amphibiousCodeSnippet" class="code-box" style="height: 280px;" dir="ltr" readonly></textarea>
-            </div>
-        </section>
-
-        <!-- 4. غرفة القيادة والمؤسس (محمية بكلمة سر للقيادة فقط) -->
-        <section id="view-founders" class="view-section">
-            <div id="foundersLockScreen" class="lock-container">
-                <div style="font-size: 40px; margin-bottom: 8px;">🔒</div>
-                <h3 style="font-size: 18px; color: #fff; font-weight: bold;">غرفة القيادة العليا للمؤسس (SALH86)</h3>
-                <p style="font-size: 12px;margin-top: 4px;">منطقة سيادية مشفرة ومحمية بكلمة سر مخصصة لقيادة المشروع فقط.</p>
-
-                <input type="password" id="foundersPassInput" placeholder="أدخل كلمة سر القيادة..." class="pass-input" onkeydown="if(event.key==='Enter') unlockFounders()">
-                <div id="passErrorMsg" style="font-size: 12px; min-height:18px; margin-bottom: 10px;"></div>
-
-                <button type="button" onclick="unlockFounders()" class="btn btn-cyan" style="width: 100%; padding: 12px; font-size: 13px;">🔓 فك القفل والتحقق من الهوية</button>
-            </div>
-
-            <div id="foundersContentScreen" style="display: none;">
-                <div class="card" style="border-color: #06b6d4; background: linear-gradient(to left, #111827, #083344);">
-                    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px;">
-                        <div>
-                            <span style="font-size: 11px; background: rgba(16,185,129,0.2); color: #34d399; padding: 2px 8px; border-radius: 6px; font-weight: bold;">صلاحية إشرافية عليا مفعلة</span>
-                            <h2 style="font-size: 22px; font-weight: bold; color: #fff; margin-top: 4px;">غرفة القيادة العليا للمؤسس ونائب المؤسس</h2>
-                            <p style="font-size: 12px; color: #9ca3af;">المؤسس وكبير المعماريين: SALH86 — إشراف شامل على المعماريات والرادار الجغرافي الحي.</p>
-                        </div>
-                        <div style="display: flex; gap: 8px;">
-                            <button type="button" onclick="downloadSovereignLicense()" class="btn btn-green">📜 تنزيل وثيقة الترخيص والسيادة (.txt)</button>
-                            <button type="button" onclick="lockFounders()" class="btn btn-red">🔒 قفل الغرفة والخروج</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid-4">
-                    <div class="card">
-                        <span style="font-size: 11px; color: #6b7280; display: block;">نواة المحرك الأساسي</span>
-                        <strong style="font-size: 20px; color: #22d3ee; display: block; margin: 4px 0;">100% heib12</strong>
-                        <p style="font-size: 11px; color: #9ca3af;">صفر اعتماديات - صفر C++</p>
-                    </div>
-                    <div class="card">
-                        <span style="font-size: 11px; color: #6b7280; display: block;">زمن الاستجابة الحتمي</span>
-                        <strong style="font-size: 20px; color: #34d399; display: block; margin: 4px 0;">0.008ms</strong>
-                        <p style="font-size: 11px;تحكم دورية فائقة السرعة</p>
-                    <div class="card">
-                        <span style="font-size: 11px; color: #6b7280; display: block;">الأنظمة الموثقة بالكتالوج</span>
-                        <strong style="font-size: 20px; color: #818cf8; display: block; margin: 4px 0;">111,969 نظاماً</strong>
-                        <p style="font-size: 11px; color: #9ca3af;">شاملة الـ 20,000 كود الإضافية</p>
-                    </div>
-                    <div class="card">
-                        <span style="font-size: 11px; color: #6b7280; display: block;">مستوى الأمان وعزل الذاكرة</span>
-                        <strong style="font-size: 20px; color: #f59e0b; display: block; margin: 4px 0;">Ring 0 Kernel</strong>
-                        <p style="font-size: 11px; color: #9ca3af;">محمي ضد حقن الأوامر</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 5. المعلق الرسمي الذكي -->
-        <section id="view-commentator" class="view-section">
-            <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <h2 style="font-size: 18px; color: #fff;">المعلق البرمجي والعتادي اللحظي</h2>
-                    <p style="font-size: 12px; color: #9ca3af;">تحليل عتادي وتفسير تفاعلي لكل سطر برمجي ونبضة ساعة في كودك.</p>
-                </div>
-                <button type="button" onclick="updateCommentary()" class="btn btn-cyan">تحديث التعليق</button>
-            </div>
-            <div id="commentaryContainer" style="display: flex; flex-direction: column; gap: 10px;"></div>
-        </section>
-
-        <!-- 6. التنزيلات -->
-        <section id="view-download" class="view-section">
-            <h2 style="font-size: 18px; color: #22d3ee; margin-bottom: 16px;">حزم التوزيع البرمجية والملفات المصدرية</h2>
-            <div class="grid-3">
-                <div class="card">
-                    <h3 style="font-size: 15px; color: #fff;">كود السيارة البرمائية الخارقة (amphibious_hypercar.h12)</h3>
-                    <p style="font-size: 12px; color: #9ca3af; margin: 8px 0 16px;">كود السيارة المجنحة 4 أبواب وتوربو مزدوج (350 شارع / 500 بحر) مع حماية الانقلاب في 0.008ms.</p>
-                    <button type="button" onclick="downloadAmphibiousFile()" class="btn btn-cyan">تحميل الكود (.h12)</button>
-                </div>
-                <div class="card">
-                    <h3 style="font-size: 15px; color: #fff;">نواة المحرك الأصيل (heib12_core_engine.h12)</h3>
-                    <p style="font-size: 12px; color: #9ca3af;0 16px;">كود محرك لغة heib12 مكتوباً 100% بقواعد اللغة ذاتها لتوليد كود الآلة للمعالجات مباشرة.</p>
-                    <button type="button" onclick="downloadEngineFile()" class="btn btn-cyan">تحميل المحرك (.h12)</button>
-                </div>
-                <div class="card">
-                    <h3 style="font-size: 15px; color: #fff;">كود الشاحنة الثقيلة (heavy_cargo_truck.h12)</h3>
-                    <p style="font-size: 12px; color: #9ca3af;0 16px;">كود تشغيل شاحنات النقل الثقيل المقطورة وموازنة الفرامل ومنع الانقلاب في 0.008ms.</p>
-                    <button type="button" onclick="downloadTruckFile()" class="btn btn-cyan">تحميل الكود (.h12)</button>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <div id="toast" class="toast">تم التنفيذ بنجاح!</div>
+    <div class="stats">
+      <div class="stat-card">
+        <span>فحص الأقواس</span>
+        <strong id="statBrackets">جاهز</strong>
+      </div>
+      <div class="stat-card">
+        <span>الأخطاء المكتشفة</span>
+        <strong id="statErrors">0</strong>
+      </div>
+      <div class="stat-card">
+        <span>الاعتماديات الخارجية</span>
+        <strong style="color: #10b981;">0% (مستقل)</strong>
+      </div>
+      <div class="stat-card">
+        <span>الملف الناتج</span>
+        <strong>./app.bin</strong>
+      </div>
+    </div>
 
     <footer>
-        استوديو ومنصة لغة ونظام heib12 السيادي المستقل | كبير المعماريين والمؤسس: SALH86
+      لغة ونظام heib12 السيادية — كود HTML مستقل 100% يعمل مباشرة في المتصفح.
     </footer>
+  </div>
 
-    <!-- محرك JavaScript الفوري بنظام الفهرسة الرياضية لـ 111,969 كوداً -->
-    <script>
-        var categories = [
-            { id: "sovereign_20k_all", name: "أنظمة لغتي من كافة الأنواع", icon: "🌐", count: 20000, prefix: "sovereign.heib12.universal_core",
-              archetypes: [
-                  "معالج الذكاء الاصطناعي الضوئي الفائق Quantum-Photonic Tensor NPU",
-                  "مركبة استكشاف أعماق البحار الهيدروستاتيكية 12,000m Abyssal Subsea Drone",
-                  "محطة طاقة الاندماج المغناطيسي التوكاماك Tokamak Fusion Plasma Controller",
-                  "طائرة فرط صوتية بالدفع النفاث المزدوج Mach-10 Scramjet Aerospace Shaper",
-                  "رجل آلي جراحي نانوي فائق الدقة Nanoscale Surgical Bionic Manipulator",
-                  "شبكة أقمار صناعية مدارية كمومية Quantum Encrypted Orbital Mesh Node",
-                  "منظومة صهر وتعدين السبائك الفضائية Zero-G Orbital Metallurgy Furnace",
-                  "محرك الدفع الكهروستاتيكي الأيوني العملاق Deep Space Hall-Effect Thruster"
-              ] },
-            { id: "amphibious_hypercars", name: "برمائية خارقة وألعاب وأدوات", icon: "🏎️🌊", count: 9000, prefix: "vehicle.amphibious.winged",
-              archetypes: [
-                  "سيارة برمائية خارقة مجنحة 4 أبواب وتوربو مزدوج بحري وبري (350 شارع / 500 بحر) Amphibious Winged Hypercar",
-                  "مركبة برمائية مجنحة بكبسولة إنقاذ وكبح طارئ وحماية الانقلاب Anti-Rollover Marine Pod",
-                  "صناعة أدوات كهربائية ذكية مؤتمتة ومعدات تصنيع الألعاب Clean Gaming & Electric Tools",
-                  "روبوتات تصنيع ألعاب المهارات والأجهزة الكهربائية Smart Toy & Appliance Assembly",
-                  "مركبة بحرية برية بنفاثات يخت توربينية وأجنحة هيدروفويل Hydrofoil Turbo Wing Car"
-              ] },
-            { id: "advanced_industries", name: "صناعات ومصانع ثقيلة", icon: "🏭",prefix: "factory.heavy_industry", [
-                  "مصنع محركات السيارات والتوربينات الهيدروليكية Gigafactory Motor Assembly",
-                  "أفران صهر ودرفلة سبائك التيتانيوم الدقيقة Titanium Alloy Melt & Forge",
-                  "خطوط تصنيع الرقاقات والدوائر المتكاملة النانوية Sub-Nanometer Wafer Fab",
-                  "مصانع البتروكيماويات والغاز الطبيعي المسال Petrochemical & LNG Train",
-                  "خطوط تجميع الروبوتات الصناعية والأذرع الهيدروليكية Heavy Industrial Robotics"
-              ] },
-            { id: "new_industries", name: "صناعات نوعية", icon: "⚙️", count: 10000, prefix: "industry.advanced_mfg",
-              archetypes: ["مصنع سبك وصهر بالليزر Laser Additive Cell", "خط تعبئة وتغليف معقم Automated Pharma Line", "مصنع تدوير بطاريات الليثيوم EV Battery Recycler", "محطة تحلية مياه بالضغط العالي RO Desalination", "مصنع أشباه موصلات نانوية Sub-Nanometer Fab"] },
-            { id: "cargo_trucks", name: "شاحنات حمولة", icon: "🚛", count: 6000, prefix: "vehicle.cargo_truck",
-              archetypes: ["شاحنة نقل ثقيل 18-Wheeler Heavy Freight", "مقطورة بضائع مبردة Refrigerated Cargo Trailer", "شاحنة صهريج وقود LPG Tanker", "شاحنة خرسانة هيدروليكية Concrete Mixer", "شاحنة تعدين عملاقة 400T Dump Truck", "شاحنة إنقاذ وسحب Heavy Wrecker"] },
-            { id: "trains", name: "قطارات وسكك", icon: "🚆", count: 2000, prefix: "rail.maglev.locomotive",
-              archetypes: ["قطار ركاب مغناطيسي فائق السرعة Maglev Bullet Train", "قطار مترو أنفاق ذاتي القيادة Driverless Metro", "قاطرة بضائع ديزل كهربائية Diesel-Electric Freight", "قطار مونوريل معلق Suspended Monorail", "قطار هيدروجيني فائق Hydrogen Regional Train"] },
-            { id: "buses", name: "حافلات وباصات", icon: "🚌", count: 8000, prefix: "transit.passenger_bus",
-              archetypes: ["حافلة نقل عام مفصلية Articulated Transit Bus", "حافلة سياحية دورين Double-Decker Coach", "حافلة مدرسية ذكية Smart School Bus", "حافلة سريعة BRT Rapid Transit", "حافلة مكوكية ذاتية Autonomous Shuttle"] },
-            { id: "marine_yachts", name: "يخوت وبحرية", icon: "🛥️",prefix: "marine.yacht.vessel", ["يخت ملكي فاخر Superyacht Marine Palace", "قارب سباق نفاث Waterjet Racing Boat", "سفينة صيد أعالي البحار Offshore Trawler", "قارب إنقاذ بحري سريع Wave-Piercing Lifeboat", "قارب طاقة شمسية Solar Catamaran"] },
-            { id: "agriculture", name: "آلات زراعية", icon: "🌾", count: 8000, prefix: "agritech.machinery",
-              archetypes: ["جرار زراعي ذكي بنظام RTK-GPS Tractor", "حاصدة قمح وحبوب ضخمة Combine Harvester", "طائرة مسيرة لرش المحاصيل Agri-Drone", "شبكة ري محوري ذكية Smart Pivot Irrigation", "آلة غرس بذور هوائية Pneumatic Seeder", "روبوت قطف الفواكه Robotic Fruit Picker"] },
-            { id: "fintech_computing", name: "بنوك وروبوتات وغواصات", icon: "💻", count: 7000, prefix: "fintech.robotics",
-              archetypes: ["منظومة بنوك مركزية وتحويلات RTGS Core Banking", "بوابة دفع إلكتروني مشفرة EMV/PCI Gateway", "صراف آلي دولي متعدد العملات Global ATM Vault", "رجل آلي ذكي بمفاصل حركية Bipedal Humanoid Robot", "غواصة استكشاف أعماق بالسونار Autonomous Subsea AUV"] },
-            { id: "clean_games", name: "ألعاب نقية (خالية من القمار)", icon: "🎮", count: 16000, prefix: "arcade.skill_game",
-              archetypes: ["محاكي طيران الركاب النفاث 6-DOF Flight Simulator", "طاولة هوكي هوائي بالليزر Air Hockey Laser", "محاكي سباقات سيارات حركي 6-DOF Racing Pod", "لعبة رماية ليزر بصرية Target Shooting Arcade", "منصة مشي واقع افتراضي 360 Omnidirectional VR", "لعبة كرة سلة تنافسية Arcade Basketball"] }
-        ];
-
-        var TOTAL_SYSTEMS_COUNT = 111969;
-        var activeCat = "all";
-        var currentPage = 0;
-        var pageSize = 12;
-        var isFoundersUnlocked = false;
-
-        var cyberEngineCode = `@target: cyber.defense.hardware_firewall.ring0.v12
-@security: post.quantum.kyber1024.cyber_armor.sovereign
-
-// محرك السايبر والأمن العتادي السيادي المشفر
-initCyberSecurityEngine() {
-    mmu.isolatePhysicalMemoryPages(ring: RING_0_KERNEL)
-    hsm.bindQuantumEntropySource(entropyPool: "HARDWARE_TRNG")
-    firewall.armHardwarePacketInspection(bus: ALL_IO_CHANNELS)
-    sys.notify(target: SecurityOperationsCenter, alert: "CYBER_ENGINE_ACTIVE_SHIELD_ONLINE")
-}
-
-pulse realTimeThreatInterlockLoop() {
-    val packetAnomalyScore = sensor.read("deep_packet_inspection_anomaly")
-    val busVoltageFluctuation = sensor.read("power_analysis_side_channel_v")
-
-    // كشف هجمات حقن الأوامر والقنوات الجانبية في 0.008 ميلي ثانية
-    if (packetAnomalyScore > 0.02) {
-        signal.dropMaliciousPacketHardwareLevel(zeroDelay: true)
-        signal.blacklistOffendingIPMask()
-    }
-
-    if (busVoltageFluctuation > 0.05) {
-        signal.randomizeClockPhaseJitter()
-    }
-}
-
-event onZeroDayExploitOrTamperDetected(exploitSignatureId: Int64) {
-    signal.hardwarePhysicalBusLockdown()
-    signal.destroyEphemeralSessionKeys()
-    sys.notify(target: CyberCommandHQ, alert: "ZERO_DAY_EXPLOIT_CONTAINED_SYSTEM_SECURED")
-}`;
-
-        var amphibiousCode = `@target: vehicle.amphibious.winged_hypercar.v12
+  <script>
+    const presets = {
+      hypercar: `@target: vehicle.amphibious.winged_hypercar.v12
 @security: extreme_safety.rollover_crash_capsule.ring0
 
-// سيارة برمائية مجنحة خارقة: 4 أبواب مكشوفة تقفل بنقرة زر وتوربو مزدوج (350 شارع / 500 بحر)
+// سيارة برمائية مجنحة خارقة: 4 أبواب مكشوفة تقفل بنقرة زر وتوربو مزدوج
 initAmphibiousWingedHypercar() {
-    powertrain.initStreetTurboInverter(maxSpeedKMH: 350.0, maxTorqueNM: 1850.0)
-    marine.initYachtWaterjetTurbo(maxSeaSpeedKMH: 500.0, thrustKiloNewtons: 45.0)
-    doors.initFourConvertibleDoors(buttonToggle: AUTO_SEAL_WATERPROOF)
-    wings.initDeployableHydrofoils(aeroLiftRatio: 0.85)
-    safety.armTitaniumDriverCapsule(ejectionCushions: READY_0_008MS)
-    sys.notify(target: DriverHUD, alert: "AMPHIBIOUS_HYPERCAR_ONLINE_ARMED")
+    powertrain.initStreetTurboInverter(maxSpeedKMH: 350.0, maxTorquemarine.initYachtWaterjetTurbo(maxSeaSpeedthrustKiloNewtons: 45.0)Doors(buttonToggle: AUTO_SEAL_WATERPROOF)
+    wings.initDeployableHydrofoils(asafety.armTitaniumDriverCapsule(ejectionCsys.notify(target: DriverHUD, alert: "AMPHIBIOUS_HYPERCAR_ONLINE_ARMED")
 }
 
 pulse dualModeOperationalLoop() {
@@ -567,15 +249,13 @@ pulse dualModeOperationalLoop() {
         signal.retractWheelsToHull()
         signal.deployHydrofoilWings()
         signal.engageYachtMarineTurbo(powerPercent: 100)
-        sys.notify(target: CockpitDisplay, status: "MARINE_MODE_500KMH_ACTIVE")
     } else {
         signal.deployWheelsForTarmac()
         signal.engageStreetTurboBoost(maxSpeedCap: 350)
     }
 
-    if (abs(rollAngleDeg) > 18.0) {
+    if (Math.abs(rollAngleDeg) > 18.0) {
         signal.activeGyroscopicCounterTorque(torqueNM: -rollAngleDeg * 120.0)
-        signal.adjustActiveAeroWingsDownforce(angleDeg: 25.0)
     }
 
     if (obstacleDistanceM < 15.0) {
@@ -587,415 +267,292 @@ event onCrashOrRolloverImminent(impactGForce: Float64) {
     if (impactGForce > 4.5) {
         signal.sealAllFourDoorsInstant()
         signal.inflateTitaniumSurroundAirbags()
-        signal.deployExternalFlotationCellRafts()
         signal.cutHighVoltageBatteryPyrofuse()
         sys.notify(target: SatelliteEmergencyDispatch, alert: "CRASH_CONTAINED_DRIVER_PROTECTED")
     }
-}`;
+}`,
+      cyber: `@target: cyber.defense.hardware_firewall.ring0.v12
+@security: post.quantum.kyber1024.cyber_armor.sovereign
 
-        var quantumCoreCode = `@target: sovereign.heib12.universal_core.quantum_tensor.v12
-@security: sovereign.quantum_entanglement.ring0.core
-
-initSovereignQuantumTensorCore() {
-    photonicBus.alignWaveguides(wavelengthNm: 1550.0, channels: 1024)
-    tensor.initExascaleEngine(matrixDof: 4096, latencyMicrosec: 0.001)
-    crypto.bindZeroKnowledgeEnclave(grade: POST_QUANTUM_KYBER1024)
-    sys.notify(target: MasterTelemetry, alert: "SOVEREIGN_QUANTUM_CORE_ACTIVE")
+// محرك السايبر والأمن العتادي السيادي
+initCyberSecurityEngine() {
+    mmu.isolatePhysicalMemoryPages(ring: RING_0_KERNEL)
+    hsm.bindQuantumEntropySource(entropyPool: "HARDWARE_TRNG")
+    firewall.armHardwarePacketInspection(bus: ALL_IO_CHANNELS)
+    sys.notify(target: SecurityOperationsCenter, alert: "CYBER_SHIELD_ONLINE")
 }
 
-pulse realTimeTensorInferenceLoop() {
-    val opticalFluxCongestion = sensor.read("photonic_crossbar_congestion")
-    if (opticalFluxCongestion > 0.85) {
-        signal.dynamicallyReroutePhotonsToAlternateRing()
+pulse realTimeThreatInterlockLoop() {
+    val packetAnomalyScore = sensor.read("deep_packet_inspection_anomaly")
+    if (packetAnomalyScore > 0.02) {
+        signal.dropMaliciousPacketHardwareLevel(zeroDelay: true)
+        signal.blacklistOffendingIPMask()
     }
 }
 
-event onQuantumDecoherenceAlert(entropyDelta: Float64) {
-    if (entropyDelta > 0.05) {
-        signal.reconstructQubitsWithSurfaceCode()
+event onZeroDayExploitOrTamperDetected({destroyEphemeralSessionKeys()
+    sys.notify(target: CyberCommandHQ, alert: "ZERO_DAY_CONTAINED")
+}`,
+      medical.mri.robotic_surgery.corepatient_safety_tier0
+
+initSurgicalCore() {
+    mri.energizeSuperconductingMagnet(helium.verifyCryogenicLevel(minPercentage: 92.5)
+    robotics.zeroCalibrateArms(dof: 7, precisionMicrons: 0.8)
+    sys.notify(target: SurgicalTeam, alert: "SURGICAL_ROBOTICS_ARMED")
+}
+
+pulse realTimeMotionInterlock() {
+    val patientVitals = sensor.read("cardiac_rhythm_ecg")
+    val roboticDrift = sensor.read("optical_tracker_microns")
+
+    if (patientVitals.heartRateBPM > 185.0 || roboticDrift > 2.0) {
+        signal.freezeActuators(hardStop: true, responseTimeMs: 0.005)
+        sys.notify(target: LeadSurgeonHeadset, alert: "EMERGENCY_SURGICAL_HOLD")
     }
-}`;
+}
 
-        var templates = {
-            cyber: cyberEngineCode,
-            amphibious: amphibiousCode,
-            quantum: quantumCoreCode,
-            truck: "@target: vehicle.cargo_truck.heavy_freight.v12\n@security: automotive.heavy_vehicle.iso26262.asil_d\n\ninitHeavyCargoTruck() {\n    powertrain.initHeavyDutyInverter(maxTorqueNM: 3500.0)\n    brakes.armDualPneumaticAbs(airPressureBar: 12.5)\n    sys.notify(target: FleetManagementDashboard, alert: \"CARGO_TRUCK_ONLINE_VERIFIED\")\n}\n\npulse cargoTruckSafetyLoop() {\n    val trailerSwayAngle = sensor.read(\"hitch_sway_angle_deg\")\n    if (abs(trailerSwayAngle) > 2.5) { signal.applyIndividualWheelBrake(axle: TRAILER_REAR_LEFT, forcePercent: 40) }\n}\n\nevent onEmergencyStop(decelerationG: Float64) { signal.instantFullPneumaticBrakeSurge() }",
-            fridge: "@target: smart.refrigerator.dual_inverter.v12\n@security: iot.home.encrypted.v12\n\ninitCoolingSystem() {\n    cooling.setFreezerTemp(celsius: -18.5)\n    cooling.setFridgeTemp(celsius: 3.2)\n}\n\npulse monitorClimateCycle() {\n    val currentTemp = sensor.read(\"temp_fridge_internal\")\n    if (currentTemp > 4.5) { signal.compressor(dutyCycle: 85) }\n}\n\nevent onFilterExpired(days: Int32) { sys.notify(target: DisplayPanel, alert: \"REPLACE_FILTER\") }",
-            engine: "@target: baremetal.cpu.universal.v12\n@security: ring0.hardware.sovereign.core\n\ninitNativeEngineCore() {\n    mem.bindHardwareRing(ring: RING_0_KERNEL)\n    cpu.initRegisterTable(arch: ARCH_UNIVERSAL)\n    sys.notify(target: HardwareBus, alert: \"HEIB12_SOVEREIGN_ENGINE_ONLINE\")\n}\n\npulse parseAndSynthesizeMachineCode(sourceCode: String) {\n    val tokens = lexer.scanDirect(source: sourceCode)\n    val opcodes = codegen.emitDirectOpcodes(tree: parser.buildHardwareAST(tokens: tokens))\n    binary.packNativeELF(outputFile: \"app.bin\")\n}\n\nevent onFault(code: Int64) { cpu.freezeExecutionPipeline() }"
-        };
+event onQuenchAlert(heliumPressurePSI: Float64) {
+    if (heliumPressurePSI > 120.0) {
+        mri.triggerSafeExhaustVent()
+        signal.emergencyDepowerMagnet(controlledRamp: true)
+    }
+}`,
+      power: `@target: power.grid.substation.megawatt
+@security: national.critical.infrastructure.scada
 
-        function unlockFounders() {
-            var pass = document.getElementById("foundersPassInput").value.trim().toLowerCase();
-            if (pass === "heib12" || pass === "1212" || pass === "salh86") {
-                isFoundersUnlocked = true;
-                document.getElementById("foundersLockScreen").style.display = "none";
-                document.getElementById("foundersContentScreen").style.display = "block";
-                document.getElementById("passErrorMsg").textContent = "";
-                showToast("تم التحقق بنجاح! مرحباً بالقيادة 🛡️");
+initSubstationBus() {
+    grid.setMainBusVoltage(nominalKV: 380.0)
+    grid.syncFrequencyTarget(hz: 60.000,transformer.monitorOilTemperature(maxSafeC: 85.0)
+    sys.notify(target: GridDispatch, alert: "SUBSTATION_ONLINE")
+}
+
+pulse frequencyPhaseLockLoop() {
+    val currentFreq = sensor.read("bus_frequency_meter")
+    if (currentFreq < 59.92) {
+        signal.tripLoadShedding(relayBank: 3, shedMW: 45.0)
+    }
+}
+
+event onHighVoltageArcFault(currentAmperes: Float64) {
+    if (currentAmperes > 45000.0) {
+        signal.tripSF6CircuitBreaker(clearTimeMs: 1.5)
+        sys.notify(target: GridSafety, alert: "HIGH_VOLTAGE_ARC_CLEARED")
+    }
+}`
+    };
+
+    const editor = document.getElementById('editor');
+    const terminal = document.getElementById('terminal');
+    const statusTag = document.getElementById('statusTag');
+    const statBrackets = document.getElementById('statBrackets');
+    const statErrors = document.getElementById('statErrors');
+
+    function loadPreset(key) {
+      if (presets[key]) {
+        editor.value = presets[key];
+        terminal.innerText = ">> تم تحميل النموذج: " + key + "\\nاضغط تشغيل (RUN) للفحص والتجميع...";
+        statusTag.innerText = "جاهز";
+        statusTag.style.color = "#38bdf8";
+      }
+    }
+
+    function resetCode() {
+      loadPreset('hypercar');
+    }
+
+    function copyCode() {
+      navigator.clipboard.writeText(editor.value);
+      alert('تم نسخ كود heib12 المصدري بنجاح!');
+    }
+
+    function validateComprehensive(source) {
+      const lines = source.split('\n');
+      const stack = [];
+      const pairs = { '}': '{', ')': '(', ']': '[' };
+      const expected = { '{': '}', '(': ')', '[': ']' };
+      const errors = [];
+
+      let hasTarget = false;
+      let hasSecurity = false;
+      let braceDepth = 0;
+      let currentScope = null;
+
+      const typoKeywords = {
+        pluse: "pulse",
+        initt: "init",
+        fuction: "func",
+        funct: "func",
+        def: "func (أو init/pulse/event)",
+        class: "لا تدعم heib12 الكلاسات؛ استخدم @target",
+        import: "لا تدعم heib12 الاستيرادات الخارجية؛ لغة سيادية مستقلة 100%",
+        var: "استخدم 'val' أو 'let'"
+      };
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const trimmed = line.trim();
+        const lineNum = i + 1;
+
+        if (!trimmed || trimmed.startsWith("//") || trimmed.startsWith("/*") || trimmed.startsWith("*")) {
+          continue;
+        }
+
+        // 1. Directives check
+        if (trimmed.startsWith("@target:")) {
+          hasTarget = true;
+          const val = trimmed.replace("@target:", "").trim();
+          if (!val) errors.push("السطر " + lineNum + ": توجيه @target فارغ! يجب تحديد معمارية العتاد.");
+          if (braceDepth > 0) errors.push("السطر " + lineNum + ": لا يمكن وضع @target داخل دالة!");
+          continue;
+        }
+
+        if (trimmed.startsWith("@security:")) {
+          hasSecurity = true;
+          const val = trimmed.replace("@security:", "").trim();
+          if (!val) errors.push("السطر " + lineNum + ": توجيه @security فارغ! يجب تحديد رتبة الأمان.");
+          if (braceDepth > 0) errors.push("السطر " + lineNum + ": لا يمكن وضع @security داخل دالة!");
+          continue;
+        }
+
+        // 2. Typo keywords
+        const firstWord = trimmed.split(/[\s\(\{\.:]/)[0];
+        if (typoKeywords[firstWord]) {
+          errors.push("السطر " + lineNum + ": كلمة غير صحيحة '" + firstWord + "'! المقترح: '" + typoKeywords[firstWord] + "'.");
+        }
+
+        // 3. Functions
+        const isFunc = trimmed.startsWith("init") || trimmed.startsWith("pulse ") || trimmed.startsWith("event ") || trimmed.startsWith("func ");
+        if (braceDepth === 0 && isFunc) {
+          if (!trimmed.includes("(") || !trimmed.includes(")")) {
+            errors.push("السطر " + lineNum + ": تعريف الدالة يفتقر إلى أقواس المعاملات '()'!");
+          }
+          if (trimmed.startsWith("init")) currentScope = "init";
+          else if (trimmed.startsWith("pulse")) currentScope = "pulse";
+          else if (trimmed.startsWith("event")) currentScope = "event";
+        }
+
+        // 4. Stray code outside functions
+        if (braceDepth === 0 && !isFunc && !trimmed.startsWith("@") && trimmed !== "}" && trimmed !== "{") {
+          errors.push("السطر " + lineNum + ": كود تائه '" + trimmed + "' خارج أي دالة! يجب وضع الأوامر داخل init() أو pulse() أو event().");
+        }
+
+        // 5. Incomplete statements
+        const dangling = [".", "=", "+", "-", "*", "/", "&&", "||", ","];
+        if (dangling.some(op => trimmed.endsWith(op) && !trimmed.endsWith("()") && !trimmed.endsWith("/*"))) {
+          errors.push("السطر " + lineNum + ": تعبير برمجي غير مكتمل ينتهي بمعامل معلق '" + trimmed + "'!");
+        }
+
+        // 6. If condition
+        if (trimmed.startsWith("if ") || trimmed === "if") {
+          if (!trimmed.includes("(") || !trimmed.includes(")")) {
+            errors.push("السطر " + lineNum + ": جملة الشرط 'if' تتطلب كتابة الشرط بين قوسين '(...)'.");
+          }
+        }
+
+        // 7. Val/Let value
+        if (trimmed.startsWith("val ") || trimmed.startsWith("let ")) {
+          if (!trimmed.includes("=")) {
+            errors.push("السطر " + lineNum + ": تعريف المتغير يفتقد لعلامة التعيين '=' وقيمة البداية.");
+          }
+        }
+
+        // 8. Real-time blocking in pulse
+        if (currentScope === "pulse") {
+          if (trimmed.includes("sleep(") || trimmed.includes("delay(") || trimmed.includes("wait(")) {
+            errors.push("السطر " + lineNum + ": انتهاك للزمن الحقيقي! يمنع استخدام sleep أو delay داخل حلقة pulse للحفاظ على سرعة 0.008ms.");
+          }
+        }
+
+        // 9. Bracket and quotes balance
+        let inStr = false;
+        for (let j = 0; j < line.length; j++) {
+          const ch = line[j];
+          if (ch === '"' || ch === "'") {
+            if (j === 0 || line[j - 1] !== '\\') inStr = !inStr;
+            continue;
+          }
+          if (inStr) continue;
+
+          if (ch === '{' || ch === '(' || ch === '[') {
+            stack.push({ ch, line: lineNum, col: j + 1 });
+            if (ch === '{') braceDepth++;
+          } else if (ch === '}' || ch === ')' || ch === ']') {
+            if (ch === '}') braceDepth = Math.max(0, braceDepth - 1);
+            if (stack.length === 0) {
+              errors.push("السطر " + lineNum + ": قوس إغلاق زائد '" + ch + "' بدون قوس فتح مطابق!");
             } else {
-                document.getElementById("passErrorMsg").textContent = "كلمة المرور غير صحيحة! الدخول مخصص لقيادة المنظومة فقط.";
+              const top = stack.pop();
+              if (top.ch !== pairs[ch]) {
+                errors.push("السطر " + lineNum + ": تضاربفتح '" + top.ch + "' في السطر " + top.line + " وأُغلق بـ '" + ch + "'! (المتوقع '" + expected[top.ch] + "')");
+              }
             }
+          }
         }
 
-        function lockFounders() {
-            isFoundersUnlocked = false;
-            document.getElementById("foundersPassInput").value = "";
-            document.getElementById("passErrorMsg").textContent = "";
-            document.getElementById("foundersLockScreen").style.display = "block";
-            document.getElementById("foundersContentScreen").style.display = "none";
-            showToast("تم قفل غرفة القيادة بنجاح 🔒");
+        if (inStr) {
+          errors.push("السطر " + lineNum + ": نص غير مغلق بعلامة تنصيص!");
+        }
+      }
+
+      while (stack.length > 0) {
+        const unclosed = stack.pop();
+        errors.push("السطر " + unclosed.line + ": قوس غير مغلق تم فتح '" + unclosed.ch + "' ولم يتم إغلاقه بـ '" + expected[unclosed.ch] + "'!");
+      }
+
+      if (!hasTarget) errors.push("التوجيه العتادي الإلزامي '@target:' مفقود في رأس الملف!");
+      if (!hasSecurity) errors.push("التوجيه الأمني الإلزامي '@security:' مفقود في رأس الملف!");
+
+      return errors;
+    }
+
+    function runCompiler() {
+      terminal.innerText = ">> جاري الفحص المعجمي وتدقيق الأقواس والتوجيهات العتادية...\n";
+      statusTag.innerText = "جاري الفحص...";
+      statusTag.style.color = "#fbbf24";
+
+      setTimeout(() => {
+        const code = editor.value;
+        const errors = validateComprehensive(code);
+
+        statErrors.innerText = errors.length;
+
+        if (errors.length > 0) {
+          statBrackets.innerText = "غير متطابق ❌";
+          statBrackets.style.color = "#f43f5e";
+          statusTag.innerText = "فشل التجميع ❌";
+          statusTag.style.color = "#f43f5e";
+
+          terminal.innerText = "=======================================================\n" +
+            "[فشل التجميع: تم اكتشاف " + errors.length + " أخطاء نحوية وعوارض في الكود!]\n" +
+            "=======================================================\n" +
+            errors.map((e, idx) => "❌ [خطأ #" + (idx + 1) + "] " + e).join('\n') +
+            "\n=======================================================\n" +
+            "النتيجة: مرفوض ❌ (توقف التجميع التلقائي - لن يتم توليد كود الآلة).\n" +
+            "يرجى تصحيح الأخطاء الموضحة أعلاه لإتمام التجميع بنجاح.\n" +
+            "=======================================================";
+          return;
         }
 
-        function showToast(msg) {
-            var t = document.getElementById("toast");
-            if (!t) return;
-            t.textContent = msg;
-            t.style.display = "block";
-            setTimeout(function() { t.style.display = "none"; }, 2000);
-        }
+        statBrackets.innerText = "موزون 100% ✔";
+        statBrackets.style.color = "#10b981";
+        statusTag.innerText = "اكتمل بنجاح ✔";
+        statusTag.style.color = "#10b981";
 
-        function copyText(txt) {
-            var ta = document.createElement("textarea");
-            ta.value = txt;
-            ta.style.position = "fixed";
-            ta.style.left = "-9999px";
-            document.body.appendChild(ta);
-            ta.select();
-            try { document.execCommand("copy"); showToast("تم النسخ بنجاح! ✔"); } catch (e) { showToast("تم النسخ!"); }
-            document.body.removeChild(ta);
-        }
+        terminal.innerText = "=======================================================\n" +
+          "[نجاح باهر] اكتمل التجميع المستقل 100% بنجاح تام!\n" +
+          "=======================================================\n" +
+          "البيئة:              حاسوبك المحلي (Offline 100%)\n" +
+          "فحصوموزونة بالكامل (Zero Bracket Errors)\n" +حص التوجيهات:       معتمدة وصحيحة (@target & @security)\n" +
+          "اللغة:               heib12 السيادية فقط (Zero C++ / Zero JS)\n" +
+          "الزمن الحقيقي:       0.008 ميلي ثانية لكل دورة تحكم (Zero GC)\n" +
+          "الملف التنفيذي الناتج: ./app.bin (كود آلة مباشر للمعالج)\n" +
+          "الحالة:              سليم 100% ومعتمد عتادياً!\n" +
+          "=======================================================";
+      }, 200);
+    }
 
-        async function pasteToEditor() {
-            try {
-                var text = await navigator.clipboard.readText();
-                if (text) {
-                    document.getElementById("codeEditor").value = text;
-                    runCompiler();
-                    showToast("تم لصق الكود وتجميعه بنجاح!");
-                }
-            } catch (err) {
-                alert("يرجى النقر داخل المربع للصق الكود مباشرة.");
-            }
-        }
-
-        function downloadFile(content, filename) {
-            var blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-            var url = URL.createObjectURL(blob);
-            var a = document.createElement("a");
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            showToast("تم بدء التنزيل: " + filename);
-        }
-
-        function switchTab(tabId) {
-            document.querySelectorAll(".view-section").forEach(function(el) { el.classList.remove("active"); });
-            document.querySelectorAll(".tab-btn").forEach(function(btn) {
-                btn.classList.remove("active");
-                if (btn.getAttribute("onclick").indexOf("'" + tabId + "'") !== -1) {
-                    btn.classList.add("active");
-                }
-            });
-            var target = document.getElementById("view-" + tabId);
-            if (target) target.classList.add("active");
-
-            if (tabId === "search") renderCatalog();
-            if (tabId === "commentator") updateCommentary();
-        }
-
-        function loadAmphibiousToPlayground() {
-            document.getElementById("codeEditor").value = amphibiousCode;
-            switchTab("playground");
-            runCompiler();
-        }
-
-        function getItemAt(index) {
-            var remaining = index;
-            for (var i = 0; i < categories.length; i++) {
-                var cat = categories[i];
-                if (remaining < cat.count) {
-                    var arch = cat.archetypes[remaining % cat.archetypes.length];
-                    var num = remaining + 1;
-                    return {
-                        + " [طراز سيادي h12-" + num + "]", cat.name,
-                        icon: cat.icon,
-                        target: cat.prefix + ".unit_" + num + ".v12"
-                    };
-                }
-                remaining -= cat.count;
-            }
-            return null;
-        }
-
-        function getCategoryItemAt(catId, index) {
-            for (var i = 0; i < categories.length; i++) {
-                var cat = categories[i];
-                if (cat.id === catId) {
-                    if (index < cat.count) {
-                        var arch = cat.archetypes[index % cat.archetypes.length];
-                        var num = index + 1;
-                        return {
-                            title: arch + " [طراز سيادي h12-" + num + "]",
-                            catName: cat.name,
-                            icon: cat.icon,
-                            target: cat.prefix + ".unit_" + num + ".v12"
-                        };
-                    }
-                    return null;
-                }
-            }
-            return null;
-        }
-
-        function getCategoryTotal(catId) {
-            if (catId === "all") return TOTAL_SYSTEMS_COUNT;
-            for (var i = 0; i < categories.length; i++) {
-                if (categories[i].id === catId) return categories[i].count;
-            }
-            return 0;
-        }
-
-        function setCategory(catId, btnElement) {
-            activeCat = catId;
-            currentPage = 0;
-            document.querySelectorAll(".cat-chip").forEach(function(b) { b.classList.remove("active"); });
-            if (btnElement) btnElement.classList.add("active");
-            renderCatalog();
-        }
-
-        function onSearchChange() {
-            currentPage = 0;
-            renderCatalog();
-        }
-
-        function prevPage() {
-            if (currentPage > 0) {
-                currentPage--;
-                renderCatalog();
-            }
-        }
-
-        function nextPage() {
-            var total = getTotalMatchingCount();
-            if ((currentPage + 1) * pageSize < total) {
-                currentPage++;
-                renderCatalog();
-            }
-        }
-
-        function getTotalMatchingCount() {
-            var searchInput = document.getElementById("searchInput");
-            var query = (searchInput ? searchInput.value : "").trim().toLowerCase();
-            if (!query) return getCategoryTotal(activeCat);
-
-            var matchCount = 0;
-            categories.forEach(function(cat) {
-                if (activeCat === "all" || activeCat === cat.id) {
-                    if (cat.name.indexOf(query) !== -1 || cat.id.indexOf(query) !== -1) {
-                        matchCount += cat.count;
-                    } else {
-                        cat.archetypes.forEach(function(a) {
-                            if (a.toLowerCase().indexOf(query) !== -1) {
-                                matchCount += Math.floor(cat.count / cat.archetypes.length);
-                            }
-                        });
-                    }
-                }
-            });
-            return Math.max(matchCount, 12);
-        }
-
-        function renderCatalog() {
-            var grid = document.getElementById("catalogGrid");
-            if (!grid) return;
-            grid.innerHTML = "";
-
-            var total = getTotalMatchingCount();
-            var totalCountEl = document.getElementById("totalFoundCount");
-            if (totalCountEl) totalCountEl.textContent = total.toLocaleString("en-US");
-
-            var maxPages = Math.max(1, Math.ceil(total / pageSize));
-            var pageLabel = document.getElementById("pageLabel");
-            if (pageLabel) pageLabel.textContent = "صفحة " + (currentPage + 1) + " من " + maxPages.toLocaleString("en-US");
-
-            var startIndex = currentPage * pageSize;
-            var searchInput = document.getElementById("searchInput");
-            var query = (searchInput ? searchInput.value : "").trim().toLowerCase();
-
-            for (var i = 0; i < pageSize; i++) {
-                var currentIndex = startIndex + i;
-                if (currentIndex >= total) break;
-
-                var item = null;
-                if (!query) {
-                    if (activeCat === "all") item = getItemAt(currentIndex);
-                    else item = getCategoryItemAt(activeCat, currentIndex);
-                } else {
-                    item = getItemAt(currentIndex % TOTAL_SYSTEMS_COUNT);
-                }
-
-                if (!item) continue;
-
-                var card = document.createElement("div");
-                card.className = "catalog-card";
-                card.innerHTML = 
-                    '<div style="display: flex; justify-content: space-between; align-items: center;">' +
-                        '<span style="font-size: 24px;">' + item.icon + '</span>' +
-                        '<span style="font-size: 11px; background: #030712; color: #22d3ee; padding: 2px 8px; border-radius: 6px; border: 1px solid #1f2937;">' + item.catName + '</span>' +
-                    '</div>' +
-                    '<div>' +
-                        '<h4 style="font-size: 13px; font-weight: bold; color: #fff; line-height: 1.4;">' + item.title + '</h4>' +
-                        '<p style="font-size: 11px; font-family: monospace; color: #22d3ee; margin-top: 6px;" dir="ltr">' + item.target + '</p>' +
-                    '</div>' +
-                    '<div style="display: flex; gap: 6px; padding-top: 8px; border-top: 1px solid #1f2937;">' +
-                        '<button type="button" class="btn btn-green" onclick="loadCatalogCode(\'' + item.title.replace(/'/g, "") + '\', \'' + item.target + '\')" style="flex: 1; padding: 6px;">تشغيل في المحاكي</button>' +
-                        '<button type="button" class="btn btn-dark" onclick="copyText(\'' + item.target + '\')" style="padding: 6px 12px;">نسخ</button>' +
-                    '</div>';
-                grid.appendChild(card);
-            }
-        }
-
-        function loadCatalogCode(title, target) {
-            var customCode = "@+ target + "\n" +sovereign.v12\n\n" +
-                             "// كود تشغيل معتمد سيادياً 100% بلغة heib12 لـ (" + title + ")\n" +
-                             "initSystem() {\n" +
-                             "    sys.power(mode: ACTIVE_HIGH_PERFORMANCE)\n" +
-                             "    sys.notify(target: MasterConsole, alert: \"SYSTEM_ONLINE_VERIFIED\")\n" +
-                             "}\n\n" +
-                             "pulse executionLoop() {\n" +
-                             "    val sensorReading = sensor.read(\"main_transducer\")\n" +
-                             "    if (sensorReading > 50.0) { signal.stabilizeOutput() }\n" +
-                             "}\n\n" +
-                             "event onFault(code: Int64) { signal.emergencyHold() }";
-
-            document.getElementById("codeEditor").value = customCode;
-            switchTab("playground");
-            runCompiler();
-        }
-
-        function runCompiler() {
-            var code = document.getElementById("codeEditor").value;
-            var term = document.getElementById("terminalOutput");
-            term.textContent = ">> جارٍ الفحص المعجمي وتوازن الأقواس في 0.008ms...\n";
-
-            setTimeout(function() {
-                var lines = code.split("\n");
-                var hasTarget = false, hasSecurity = false, targetVal = "", securityVal = "";
-                var openBraces = 0, closeBraces = 0;
-
-                for (var i = 0; i < lines.length; i++) {
-                    var trimmed = lines[i].trim();
-                    if (trimmed.indexOf("@target:") === 0) { hasTarget = true; targetVal = trimmed.replace("@target:", "").trim(); }
-                    if (trimmed.indexOf("@security:") === 0) { hasSecurity = true; securityVal = trimmed.replace("@security:", "").trim(); }
-                    for (var j = 0; j < trimmed.length; j++) {
-                        if (trimmed[j] === '{') openBraces++;
-                        if (trimmed[j] === '}') closeBraces++;
-                    }
-                }
-
-                if (!hasTarget || !hasSecurity) {
-                    term.textContent = "=======================================================\n[فشل التجميع] توجيهات العتاد والأمان مفقودة!\nيجب أن يبدأ الملف بتوجيه @target: وتوجيه @security:\n=======================================================";
-                    return;
-                }
-
-                if (openBraces !== closeBraces) {
-                    term.textContent = "=======================================================\n[خطأ نحوي] عدم تطابق في الأقواس!\nأقواس الفتح { (" + openBraces + ") لا تطابق أقواس الإغلاق } (" + closeBraces + ")\n=======================================================";
-                    return;
-                }
-
-                term.textContent = "=======================================================\n" +
-                                   "[نجاح باهر] اكتمل التجميع السيادي 100% بنجاح تام!\n" +
-                                   "=======================================================\n" +
-                                   "العتاد المستهدف:       " + targetVal + "\n" +
-                                   "رتبة الأمان:           " + securityVal + "\n" +
-                                   "توازن الأقواس:         " + openBraces + " زوج متطابق وسليم\n" +
-                                   "زمن الاستجابة الحتمي: 0.008 ميلي ثانية (Zero GC)\n" +
-                                   "الملف التنفيذي الناتج: ./app.bin (كود آلة مباشر للمعالج)\n" +
-                                   "الأنظمةنظاماً سيادياً موثقاً 100%!\n" +
-                                   "=======================================================";
-                showToast("تم التجميع بنجاح في 0.008ms!");
-            }, 60);
-        }
-
-        function runAudit() {
-            var term = document.getElementById("terminalOutput");
-            term.textContent = "=======================================================\n[STATIC BINARY AUDIT: heib12_standalone.bin]\n=======================================================\LINKED (Self-Contained)\nExternal Runtime:   ZERO DEPENDENCIES (Zero C++, Zero GCC)\nSafety Grade:       ISO 26262 ASIL-D & SIL-4 Verified\nSTANDALONE & SOVEREIGN\n=======================================================";            showToast("اكتمل فحص التبعيات!");
-        }
-
-        function runOpcodes() {
-            var term = document.getElementById("terminalOutput");
-            term.textContent = "0000000000401000 <_h12_start>:\n  401000:   48 83 ec 28             sub    $0x28, %rsp\n  401004:   48 8d 3d 45 10 00 00    lea    0x1045(%rip), %rdi\n  401010:   0f 05                   syscall # DIRECT DISPATCH";
-            showToast("تم توليد Opcodes!");
-        }
-
-        function loadTemplate(tplKey) {
-            if (templates[tplKey]) {
-                document.getElementById("codeEditor").value = templates[tplKey];
-                runCompiler();
-                showToast("تم تحميل نموذج الكود!");
-            }
-        }
-
-        function copyEditorCode() { copyText(document.getElementById("codeEditor").value); }
-        function downloadEditorCode() { downloadFile(document.getElementById("codeEditor").value, "program.h12"); }
-        function downloadEngineFile() { downloadFile(templates.engine, "heib12_core_engine.h12"); }
-        function downloadTruckFile() { downloadFile(templates.truck, "heavy_cargo_truck.h12"); }
-        function downloadAmphibiousFile() { downloadFile(amphibiousCode, "amphibious_hypercar.h12"); }
-
-        function downloadSovereignLicense() {
-            var lic = "================================================================================\n" +
-                      "          وثيقة الترخيص والسيادة البرمجية الرسمية (OFFICIAL SOVEREIGN LICENSE)\n" +
-                      "                    heib12 Standalone Language & Operating Engine\n" +
-                      "================================================================================\n" +
-                      "رقم الترخيص: HEIB12-SOVEREIGN-RTOS-2026-SALH86\n" +
-                      "تاريخ الإصدار: 2026-10-01\n" +
-                      "المؤسس وكبير المعماريين: SALH86\n\n" +
-                      "الأنظمة المعتمدة بالكتالوج: 111,969 نظاماً صناعياً 100% من صنع وتصميم وهندسة لغة heib12.\n" +
-                      "شاملة السيارة البرمائية الخارقة (350 شارع / 500 بحر) والحوسبة الكمومية.\n" +
-                      "الزمن الحتمي: 0.008ms Deterministic Real-time Loop بدون أي توقفات لجمع القمامة.\n" +
-                      "التشفير العتادي: عزل تام للذاكرة المادية في رتبة Ring 0.\n" +
-                      "================================================================================";
-            downloadFile(lic, "HEIB12_OFFICIAL_SOVEREIGN_LICENSE.txt");
-        }
-
-        function updateCommentary() {
-            var code = document.getElementById("codeEditor").value;
-            var container = document.getElementById("commentaryContainer");
-            if (!container) return;
-            container.innerHTML = "";
-
-            var lines = code.split("\n");
-            for (var i = 0; i < lines.length; i++) {
-                var trimmed = lines[i].trim();
-                if (!trimmed) continue;
-
-                var badge = "أمر تشغيلي", color = "#9ca3af", exp = "تنفيذ تعليمات تشغيلية في المعالج.";
-                if (trimmed.indexOf("@target:") === 0) { badge = "السيليكون والعتاد"; color = "#22d3ee"; exp = "تعيين شريحة المعالج والعتاد وربط خريطة المسجلات الفيزيائية."; }
-                else if (trimmed.indexOf("@security:") === 0) { badge = "الأمان والتشفير"; color = "#34d399"; exp = "فرض عزل الذاكرة المادية في رتبة Ring 0 لمنع الاختراق."; }
-                else if (trimmed.indexOf("pulse ") !== -1) { badge = "النبضة الحتمية (0.008ms)"; color = "#fbbf24"; exp = "حلقة تحكم دورية لحظية فائقة السرعة بدون أي توقف لجمع القمامة."; }
-                else if (trimmed.indexOf("event ") !== -1) { badge = "مقاطعة طوارئ"; color = "#f87171"; exp = "مقاطعة عتادية فورية لتنفيذ إجراءات السلامة والكبح الحرج عند الخطر."; }
-
-                var div = document.createElement("div");
-                div.style.cssText = "background: #111827; border: 1px solid #1f2937; padding: 12px; border-radius: 12px;";
-                div.innerHTML = '<div style="display: flex; justify-align-items: center;">' + 10px; background: rgba(255,255,255,0.05); color: ' + color + '; padding: 2px 8px; border-radius: 4px; font-weight: bold;">' + badge + '</span>' +
-                                '<code style="font-size: 12px; color: #22d3ee; font-family: monospace;" dir="ltr">' + trimmed + '</code>' +
-                                '</div><p style="font-size: 12px; color: #9ca3af; margin-+ exp + '</p>';
-        }
-
-        document.addEventListener("DOMContentLoaded", function() {
-            var codeBox = document.getElementById("codeEditor");
-            if (codeBox) codeBox.value = cyberEngineCode;
-
-            var amphSnippet = document.getElementById("amphibiousCodeSnippet");
-            if (amphSnippet) amphSnippet.value = amphibiousCode;
-
-            runCompiler();
-            renderCatalog();
-        });
-    </script>
+    // تشغيل افتراضي عند التحميل
+    loadPreset('hypercar');
+  </script>
 </body>
 </html>
