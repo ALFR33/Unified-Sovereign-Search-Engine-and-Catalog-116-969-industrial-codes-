@@ -50,7 +50,7 @@
 </head>
 <body class="min-h-screen w-full flex flex-col items-center justify-between bg-slate-950 text-slate-100 font-sans selection:bg-cyan-500 selection:text-slate-950">
 
-  <!-- TOP NAVIGATION BAR (IDENTICAL) -->
+  <!-- TOP NAVIGATION BAR -->
   <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-50 w-full">
     <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
       <div class="flex items-center gap-3">
@@ -59,12 +59,12 @@
         </div>
         <div>
           <div class="flex items-center gap-2">
-            <h1 class="text-xl font-black text-white tracking-wide">لغة Heib12 الاحترافية</h1>
+            <h1 class="text-xl font-black text-white tracking-wide">لغة Heib12 الاحترافية والاستوديو الموسيقي</h1>
             <span class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-mono font-bold">
               v12.0 Pro
             </span>
           </div>
-          <p class="text-xs text-slate-400">لغة البرمجة الأقوى والأسهل — تعمل على الجوال والحاسوب بنظام كود حقيقي</p>
+          <p class="text-xs text-slate-400">لغة البرمجة الأقوى والاستوديو الذكي — للفنان والمبرمج صالح الهيب كليل</p>
         </div>
       </div>
 
@@ -74,13 +74,13 @@
           <span>💻 المحرر وفاحص الأكواد</span>
         </button>
         <button id="nav-dl" onclick="switchTab('dl')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all cursor-pointer shrink-0 text-slate-400 hover:text-slate-200">
-          <span>📥 مركز التنزيل (حاسوب وجوال)</span>
+          <span>📥 مركز التنزيل</span>
         </button>
         <button id="nav-founder" onclick="switchTab('founder')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all cursor-pointer shrink-0 text-amber-400 hover:text-amber-300">
           <span>🛡️ غرفة مراقبة المؤسس 🛡️</span>
         </button>
         <button id="nav-docs" onclick="switchTab('docs')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all cursor-pointer shrink-0 text-slate-400 hover:text-slate-200">
-          <span>📖 دليل وقواعد اللغة</span>
+          <span>📖 الدليل والنبذة التعريفية</span>
         </button>
       </nav>
     </div>
@@ -91,13 +91,13 @@
         <span class="text-slate-400 font-bold">اختر جهازك لتخصيص بيئة العرض والتنزيل:</span>
         <div class="flex items-center gap-2">
           <button id="btn-phone" onclick="setDevice('phone')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer bg-slate-900 text-slate-300 hover:bg-slate-800 border border-slate-800">
-            <span>📱 جوال / هاتف محمول</span>
+            <span>📱 جوال</span>
           </button>
           <button id="btn-tablet" onclick="setDevice('tablet')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer bg-slate-900 text-slate-300 hover:bg-slate-800 border border-slate-800">
-            <span>📲 آيباد / جهاز لوحي (iPad)</span>
+            <span>📲 آيباد</span>
           </button>
           <button id="btn-pc" onclick="setDevice('pc')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20 scale-105">
-            <span>💻 حاسوب / كمبيوتر (PC)</span>
+            <span>💻 حاسوب (PC)</span>
           </button>
         </div>
       </div>
@@ -138,7 +138,7 @@
         <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden flex flex-col shadow-xl">
           <div class="bg-slate-950 px-4 py-2.5 border-b border-slate-800 flex items-center justify-between text-xs font-mono">
             <span class="text-cyan-400 font-bold">main.h12 (محرر Heib12 المباشر)</span>
-            <span class="text-slate-500 text-[11px]">لغة Heib12 الأصلية</span>
+            <span class="text-slate-500 text-[11px]">Salh Alheib Klel</span>
           </div>
           <textarea id="codeEditor" dir="ltr" spellcheck="false" class="w-full h-[450px] p-4 bg-slate-950 text-cyan-300 font-mono text-xs focus:outline-none resize-none leading-relaxed border-none selection:bg-cyan-500 selection:text-slate-950">@target: auto
 @security: high
@@ -146,8 +146,8 @@
 fn main() {
     val languageName = "Heib12"
     val version = 12.0
-    sys.print("مرحباً بك في لغة Heib12 السيادية!")
-    sys.print("أسرع وأقوى لغة للمطورين - تعمل على الجوال والحاسوب")
+    sys.print("مرحباً بك في لغة وصانع موسيقى Heib12 السيادي!")
+    sys.print("إبداع المبرمج والفنان صالح الهيب كليل")
 }
 
 pulse realTimeEngine() {
@@ -181,8 +181,8 @@ pulse realTimeEngine() {
 
             <div class="space-y-1 pt-2 border-t border-slate-900 text-left">
               <span class="text-slate-500 text-[10px] font-bold block">مخرجات الطباعة (Standard Output):</span>
-              <pre id="stdoutView" class="text-cyan-300 text-xs whitespace-pre-wrap leading-relaxed">مرحباً بك في لغة Heib12 السيادية!
-أسرع وأقوى لغة للمطورين - تعمل على الجوال والحاسوب</pre>
+              <pre id="stdoutView" class="text-cyan-300 text-xs whitespace-pre-wrap leading-relaxed">مرحباً بك في لغة وصانع موسيقى Heib12 السيادي!
+إبداع المبرمج والفنان صالح الهيب كليل</pre>
             </div>
           </div>
         </div>
@@ -196,7 +196,7 @@ pulse realTimeEngine() {
           <span>مركز التنزيل المباشر: تنزيل الموقع كاملاً 100% لكل جهاز</span>
         </h2>
         <p class="text-xs text-slate-400">
-          كل خيار أدناه ينزل لك الموقع كاملاً بنسبة 100% (نفس المحرر، المترجم، دليل الطلاب، المقال الإنجليزي، وغرفة المؤسس) مع تهيئته المناسبة لجهازك ليعمل أوفلاين دون إنترنت:
+          كل خيار أدناه ينزل لك الموقع كاملاً بنسبة 100% (نفس المحرر، المترجم، النبذة الموسيقية، وغرفة المؤسس) ليعمل أوفلاين دون إنترنت:
         </p>
       </div>
 
@@ -204,60 +204,36 @@ pulse realTimeEngine() {
         <!-- PC Card -->
         <div class="bg-gradient-to-br from-slate-900 via-slate-900 to-cyan-950/40 border-2 border-cyan-500/60 p-6 sm:p-7 rounded-3xl flex flex-col justify-between space-y-5 shadow-2xl">
           <div class="space-y-4">
-            <div class="flex items-center justify-between">
-              <span class="text-xs bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 px-3 py-1 rounded-full font-mono font-bold">
-                💻 نسخة الحاسوب والكمبيوتر
-              </span>
-            </div>
+            <span class="text-xs bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 px-3 py-1 rounded-full font-mono font-bold">
+              💻 نسخة الحاسوب والكمبيوتر
+            </span>
             <div>
-              <h3 className="text-lg sm:text-xl font-black text-white">تنزيل نسخة الحاسوب واللابتوب الكاملة (PC Edition)</h3>
-              <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                ملف <strong>heib12-pc-site.html</strong> الكامل؛ مهيأ لشاشات الحواسب واللابتوبات مع محرر عريض ودعم كامل لاختصارات لوحة المفاتيح ويعمل أوفلاين 100% دون إنترنت.
+              <h3 class="text-lg sm:text-xl font-black text-white">تنزيل نسخة الحاسوب واللابتوب الكاملة (PC Edition)</h3>
+              <p class="text-xs text-slate-300 mt-1 leading-relaxed">
+                ملف <strong>heib12-pc-site.html</strong> الكامل؛ مهيأ لشاشات الحواسب واللابتوبات مع محرر عريض ودعم كامل ومكتبة استوديو Heib12.
               </p>
-            </div>
-            <div className="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 text-xs space-y-1 font-mono">
-              <div class="flex justify-between text-slate-400">
-                <span>البيئة المستهدفة:</span>
-                <strong class="text-cyan-400">Windows / Mac / Linux (حاسوب)</strong>
-              </div>
-              <div class="flex justify-between text-slate-400">
-                <span>محتوى الملف:</span>
-                <strong class="text-emerald-400">الموقع كاملاً 100% بدون أي نقص</strong>
-              </div>
             </div>
           </div>
           <button onclick="downloadSelfClone('pc')" class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black py-4 px-6 rounded-2xl text-sm flex items-center justify-center gap-2.5 shadow-xl shadow-cyan-500/20 cursor-pointer active:scale-98">
-            <span>تنزيل نسخة الحاسوب والكمبيوتر الكاملة (.html) 📥</span>
+            <span>تنزيل نسخة الحاسوب الكاملة (.html) 📥</span>
           </button>
         </div>
 
         <!-- Mobile Card -->
         <div class="bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/40 border-2 border-emerald-500/60 p-6 sm:p-7 rounded-3xl flex flex-col justify-between space-y-5 shadow-2xl">
           <div class="space-y-4">
-            <div class="flex items-center justify-between">
-              <span class="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-full font-mono font-bold">
-                📱 نسخة الجوال والهاتف
-              </span>
-            </div>
+            <span class="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-full font-mono font-bold">
+              📱 نسخة الجوال والهاتف
+            </span>
             <div>
-              <h3 className="text-lg sm:text-xl font-black text-white">تنزيل نسخة الجوال والهواتف الكاملة (Mobile Edition)</h3>
-              <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                ملف <strong>heib12-mobile-site.html</strong> الكامل؛ مهيأ لشاشات اللمس والهواتف الذكية (iPhone / Android) ليعمل في وضع الطيران وبدون إنترنت بنفس التبويبات والمحرر.
+              <h3 class="text-lg sm:text-xl font-black text-white">تنزيل نسخة الجوال والهواتف الكاملة (Mobile Edition)</h3>
+              <p class="text-xs text-slate-300 mt-1 leading-relaxed">
+                ملف <strong>heib12-mobile-site.html</strong> الكامل؛ مهيأ لشاشات اللمس والهواتف الذكية ليعمل في وضع الطيران وبدون إنترنت.
               </p>
-            </div>
-            <div className="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 text-xs space-y-1 font-mono">
-              <div class="flex justify-between text-slate-400">
-                <span>البيئة المستهدفة:</span>
-                <strong class="text-emerald-400">iPhone / Android (هاتف جوال)</strong>
-              </div>
-              <div class="flex justify-between text-slate-400">
-                <span>محتوى الملف:</span>
-                <strong class="text-emerald-400">الموقع كاملاً 100% بدون أي نقص</strong>
-              </div>
             </div>
           </div>
           <button onclick="downloadSelfClone('phone')" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-4 px-6 rounded-2xl text-sm flex items-center justify-center gap-2.5 shadow-xl shadow-emerald-500/20 cursor-pointer active:scale-98">
-            <span>تنزيل نسخة الجوال والهاتف الكاملة (.html) 📥</span>
+            <span>تنزيل نسخة الجوال الكاملة (.html) 📥</span>
           </button>
         </div>
       </div>
@@ -289,7 +265,7 @@ pulse realTimeEngine() {
       <div id="founderLoginBox" class="max-w-md mx-auto bg-slate-900 border-2 border-amber-500/50 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl">
         <div class="text-center space-y-2">
           <h2 class="text-xl sm:text-2xl font-black text-white">غرفة مراقبة المؤسس العليا</h2>
-          <p class="text-xs text-slate-400">منطقة سيادية خاصة بالمؤسس (SALH86) لمتابعة التنزيلات الحقيقية، الزوار، ورادار كشف محاولات الاختراق والتخريب.</p>
+          <p class="text-xs text-slate-400">منطقة سيادية خاصّة بالمؤسس (SALH86) لمتابعة التنزيلات والزوار ورادار الاختراق والتخريب.</p>
         </div>
         <div class="space-y-4">
           <input id="founderPassInput" type="password" placeholder="أدخل كلمة المرور..." class="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-4 py-3 text-xs text-slate-100 placeholder-slate-600 focus:outline-none font-mono">
@@ -320,10 +296,9 @@ pulse realTimeEngine() {
           </button>
         </div>
 
-        <!-- 4 Metric Cards -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
-            <span class="text-[11px] text-slate-400 block font-bold">إجمالي تنزيلات اللغة الحقيقية</span>
+            <span class="text-[11px] text-slate-400 block font-bold">إجمالي التنزيلات الحقيقية</span>
             <span class="text-2xl sm:text-3xl font-black text-cyan-400 font-mono mt-1 block">48 تنزيل</span>
           </div>
           <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
@@ -340,7 +315,6 @@ pulse realTimeEngine() {
           </div>
         </div>
 
-        <!-- Intrusion Radar Table -->
         <div class="bg-slate-900 border-2 border-rose-500/50 rounded-3xl p-6 space-y-4 shadow-xl">
           <div class="flex items-center justify-between border-b border-slate-800 pb-3">
             <h3 class="text-base font-bold text-white">رادار كشف محاولات التهكير والتخريب (Intrusion Radar)</h3>
@@ -366,22 +340,19 @@ pulse realTimeEngine() {
       </div>
     </div>
 
-    <!-- ==================== TAB 4: DOCS ==================== -->
+    <!-- ==================== TAB 4: DOCS & AI MUSIC BIO ==================== -->
     <div id="tab-docs" class="space-y-6 hidden">
       <div class="bg-slate-900 border border-slate-800 p-5 rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
         <div class="text-right" dir="rtl">
-          <h2 class="text-xl sm:text-2xl font-black text-white">دليل وقواعد ومواصفات لغة Heib12</h2>
-          <p class="text-xs text-slate-400 mt-1">دليل الطلاب الجدد، المقال الإنجليزي المعماري، والمرجع التقني الشامل</p>
+          <h2 class="text-xl sm:text-2xl font-black text-white">دليل وقواعد ومواصفات لغة Heib12 والنبذة الموسيقية</h2>
+          <p class="text-xs text-slate-400 mt-1">دليل الطلاب، النبذة الموسيقية والذكاء الاصطناعي للفنان صالح الهيب كليل</p>
         </div>
         <div class="flex items-center gap-1.5 bg-slate-950 p-1.5 rounded-2xl border border-slate-800 text-xs font-bold overflow-x-auto">
           <button id="doc-btn-student" onclick="switchDocMode('student')" class="px-3.5 py-2 rounded-xl transition-all cursor-pointer bg-emerald-500 text-slate-950 font-black shadow-md shadow-emerald-500/20">
-            <span>🎓 دليل الطلاب الجدد (ابدأ هنا)</span>
+            <span>🎓 دليل الطلاب</span>
           </button>
-          <button id="doc-btn-en" onclick="switchDocMode('en')" class="px-3.5 py-2 rounded-xl transition-all cursor-pointer text-slate-400 hover:text-slate-200">
-            <span>🇬🇧 English Specification</span>
-          </button>
-          <button id="doc-btn-ar" onclick="switchDocMode('ar')" class="px-3.5 py-2 rounded-xl transition-all cursor-pointer text-slate-400 hover:text-slate-200">
-            <span>🇸🇦 المرجع التقني</span>
+          <button id="doc-btn-ai" onclick="switchDocMode('ai')" class="px-3.5 py-2 rounded-xl transition-all cursor-pointer text-slate-400 hover:text-slate-200">
+            <span>🎵 النبذة الموسيقية والذكاء الاصطناعي</span>
           </button>
         </div>
       </div>
@@ -391,59 +362,23 @@ pulse realTimeEngine() {
         <div class="bg-gradient-to-r from-slate-900 via-emerald-950/30 to-slate-900 border-2 border-emerald-500/40 p-6 sm:p-8 rounded-3xl space-y-4 shadow-2xl">
           <h1 class="text-2xl sm:text-3xl font-black text-white">أهلاً بك في عالم البرمجة السيادية: كيف تبدأ مع لغة Heib12؟</h1>
           <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
-            مرحباً بك يا بطل! لغة <strong>Heib12</strong> صُممت لتمنحك <strong>أسرع أداء عتادي في العالم (0.008ms)</strong> وبنفس الوقت تكون <strong>أسهل وأوضح بكثير من C++ وبايثون</strong> دون تعقيدات وبدون الحاجة لمكتبات خارجية.
+            مرحباً بك يا بطل! لغة <strong>Heib12</strong> صُممت لتعطيك <strong>أسرع أداء عتادي (0.008ms)</strong> وبأسهل طريقة ممكنة من إبداع <strong>صالح الهيب كليل</strong>.
           </p>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-2">
-            <h4 class="text-sm font-bold text-cyan-400">1. برنامجك الأول (Hello World):</h4>
-            <pre class="bg-slate-950 p-3 rounded-xl font-mono text-xs text-emerald-400" dir="ltr">@target: auto
-@security: high
-
-fn main() {
-    val name = "أحمد"
-    sys.print("مرحباً بك في لغة Heib12!")
-}</pre>
-          </div>
-
-          <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-2">
-            <h4 class="text-sm font-bold text-amber-400">2. المتغيرات ببساطة (val و mut):</h4>
-            <pre class="bg-slate-950 p-3 rounded-xl font-mono text-xs text-amber-300" dir="ltr">val maxSpeed = 350.0  // ثابت مقفل
-mut score = 0         // متغير قابل للتعديل
-score = score + 10</pre>
-          </div>
-        </div>
-
-        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-2">
-          <h4 class="text-sm font-bold text-emerald-400">3. نبضة القلب الحتمية (دالة pulse):</h4>
-          <pre class="bg-slate-950 p-3 rounded-xl font-mono text-xs text-emerald-300" dir="ltr">pulse robotHeartbeat() {
-    val distance = sensor.read("front_radar")
-    if (distance < 2.0) {
-        signal.emergencyBrake()
-        sys.print("عائق قريب! تم التوقف في 0.008ms.")
-    }
-}</pre>
         </div>
       </div>
 
-      <!-- English Whitepaper -->
-      <div id="doc-sub-en" class="space-y-6 text-left hidden" dir="ltr">
+      <!-- AI Music Bio Subtab -->
+      <div id="doc-sub-ai" class="space-y-6 text-right hidden" dir="rtl">
         <div class="bg-gradient-to-r from-slate-900 via-cyan-950/30 to-slate-900 border-2 border-cyan-500/40 p-6 sm:p-8 rounded-3xl space-y-4 shadow-2xl">
-          <span class="text-[11px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 px-3 py-1 rounded-full font-mono font-bold uppercase">Official Whitepaper v12.0</span>
-          <h1 class="text-2xl sm:text-3xl font-black text-white mt-2">Heib12: High-Assurance Deterministic Systems Architecture</h1>
-          <p class="text-xs text-slate-400 font-mono">Author: Chief Architect SALH86 | Execution Target: Bare-Metal Silicon Ring 0</p>
-          <p class="text-sm text-slate-300 leading-relaxed">
-            Heib12 is engineered to surpass C++, Rust, and Python in mission-critical applications. Built with mathematical determinism, it guarantees an uncompromising <strong>0.008ms real-time control cycle</strong> with Zero Garbage Collection (Zero GC) and physical Ring 0 MMU memory isolation.
+          <span class="text-[11px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 px-3 py-1 rounded-full font-mono font-bold uppercase">النبذة الموسيقية والذكاء الاصطناعي</span>
+          <h2 class="text-2xl sm:text-3xl font-black text-white mt-2">منصة وصانع الموسيقى الذكي (heib12 Studio)</h2>
+          <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            يشير مصطلح heib12 إلى استوديو ومنصة موسيقية ذكية (heib12 Studio) تابعة للفنان والموزع الموسيقي <strong>صالح الهيب كليل (Salh Alheib Klel)</strong>. تضم المكتبة أعمالاً تمزج بين الآلات الشرقية والتوزيع الحديث مثل مقطوعات <em>"Mirage of Andalusia"</em> و<em>"Soul of the Duduk"</em> و<em>"Anatolian Fury"</em>[cite: 1].
           </p>
-        </div>
-      </div>
-
-      <!-- Arabic Reference -->
-      <div id="doc-sub-ar" class="space-y-5 text-right hidden" dir="rtl">
-        <div class="bg-slate-900 border border-slate-800 p-6 rounded-3xl space-y-4 shadow-xl">
-          <h3 class="text-xl font-black text-white">المرجع التقني وقواعد لغة Heib12</h3>
-          <p class="text-xs text-slate-300 leading-relaxed">صُممت لغة Heib12 لتكون بديهية وسهلة جداً للمبرمجين مع أداء عتادي أسرع واستجابة حتمية في 0.008ms وبدون أي توقفات.</p>
+          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2 text-xs font-mono text-cyan-300">
+            <p>🎵 صانع الموسيقى الذكي (AI Producer): مساعد ذكي مدمج يتيح تفاعل المستخدمين لطلب وتوزيع مقطوعات موسيقية مخصصة[cite: 1].</p>
+            <p>🌍 التواجد الرقمي: الموقع الرسمي Salh Alheib Klel: heib12 Studio وحسابات تيك توك ومصادر التوزيع الرقمي[cite: 1].</p>
+          </div>
         </div>
       </div>
     </div>
@@ -452,7 +387,7 @@ score = score + 10</pre>
 
   <!-- FOOTER -->
   <footer class="border-t border-slate-800 py-5 text-center text-xs text-slate-500 w-full">
-    <p>لغة برمجة Heib12 السيادية — بيئة تشغيل ومترجم حقيقي متوافق مع الحواسيب والجوالات 100%</p>
+    <p>لغة برمجة واستوديو Heib12 — إبداع المبرمج والفنان صالح الهيب كليل</p>
   </footer>
 
   <!-- PAYPAL SECURE MODAL -->
@@ -489,8 +424,8 @@ score = score + 10</pre>
 fn main() {
     val languageName = "Heib12"
     val version = 12.0
-    sys.print("مرحباً بك في لغة Heib12 السيادية!")
-    sys.print("أسرع وأقوى لغة للمطورين - تعمل على الجوال والحاسوب")
+    sys.print("مرحباً بك في لغة وصانع موسيقى Heib12 السيادي!")
+    sys.print("إبداع المبرمج والفنان صالح الهيب كليل")
 }
 
 pulse realTimeEngine() {
@@ -513,14 +448,6 @@ pulse motionControlLoop() {
     val rollAngle = sensor.read("gyro_chassis_roll_deg")
     if (rollAngle > 18.0) {
         signal.counterTorqueActive(torqueNM: -rollAngle * 120.0)
-    }
-}
-
-event onCrashImminent(gForce: Float64) {
-    if (gForce > 4.5) {
-        signal.sealAllDoorsInstant()
-        signal.inflateSurroundAirbags()
-        sys.panic("اصطدام محتمل! تم عزل وحماية السائق في 0.008ms.")
     }
 }`,
       ai_server: `@target: network.ai_edge_server.v12
@@ -569,7 +496,7 @@ pulse precisionLoop() {
     }
 
     function switchDocMode(m) {
-      ['student', 'en', 'ar'].forEach(d => {
+      ['student', 'ai'].forEach(d => {
         document.getElementById('doc-sub-' + d).classList.add('hidden');
         document.getElementById('doc-btn-' + d).className = 'px-3.5 py-2 rounded-xl transition-all cursor-pointer text-slate-400 hover:text-slate-200';
       });
@@ -637,14 +564,12 @@ pulse precisionLoop() {
       const expected = { '{': '}', '(': ')', '[': ']' };
 
       let hasTarget = false;
-      let hasSecurity = false;
       let printOutputs = [];
 
       lines.forEach((l, idx) => {
         const tr = l.trim();
         const lineNum = idx + 1;
         if (tr.startsWith('@target:')) hasTarget = true;
-        if (tr.startsWith('@security:')) hasSecurity = true;
 
         for (let i = 0; i < l.length; i++) {
           const ch = l[i];
@@ -722,7 +647,6 @@ pulse precisionLoop() {
       window.open(payUrl, "_blank");
     }
 
-    // Set preset based on target
     setDevice('pc');
   </script>
 </body>
